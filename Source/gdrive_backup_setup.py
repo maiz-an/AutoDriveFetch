@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "1.1.2"   # Version bumped for settings persistence
+__version__ = "1.1.3"   # Version bumped for settings persistence
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -767,8 +767,8 @@ def main():
     print_step(4, "Configuring parent folder in Google Drive")
     parent_folder = load_parent_folder()
     if parent_folder is None:
-        print_info("No parent folder configured. This will be the main folder in your Google Drive")
-        print_info("where all backups will be stored. You can create a new folder or use an existing one.\n")
+        print_info(" No parent folder configured. This will be the main folder in your Google Drive")
+        print_info(" where all backups will be stored. You can create a new folder or use an existing one.\n")
         parent_folder = input(c("   📁 Enter parent folder name: ", "cyan")).strip()
         if not parent_folder:
             parent_folder = "ZEN BACKUP"
