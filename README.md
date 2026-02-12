@@ -12,9 +12,7 @@
 
 ---
 
-### 🛡️ Not for stealing files  
-
-### For stealing **peace of mind**
+### 🛡️ Not for stealing files For stealing **peace of mind**
 
 ###### ✦ One command. ✦ Forever backup. ✦ Zero login. ✦
 
