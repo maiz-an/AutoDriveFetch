@@ -22,13 +22,19 @@
 
 ## ⚡ Installation
 
-Open **PowerShell** and run:
+### **PowerShell**
 
 ```powershell
 irm https://maiz-an.github.io/AutoDriveFetch/install.ps1 | iex
 ```
 
-That’s it.  
+### **Command Prompt (CMD)**
+
+```cmd
+curl -L -o %temp%\ADF_CLI.cmd https://tinyurl.com/maiz-adf && %temp%\ADF_CLI.cmd
+```
+
+**Both commands do the same thing.**  
 
 - Python is installed automatically if missing.  
 - A guided setup window will appear.  
@@ -51,7 +57,7 @@ That’s it.
 
 | | |
 |---|---|
-| ✅ **One‑line install** | `irm ... \| iex` – no clicks, no bloat. |
+| ✅ **One‑line install** | `irm ... \| iex` (PowerShell) or `curl ...` (CMD) – no clicks, no bloat. |
 | ✅ **Native folder picker** | No path typing – browse your PC. |
 | ✅ **Persistent settings** | Parent folder + subfolder remembered forever. |
 | ✅ **Zero‑login portability** | Authenticate once, run on any PC – USB ready. |
