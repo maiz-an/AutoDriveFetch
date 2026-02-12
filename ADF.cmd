@@ -1,9 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Set UTF-8 codepage for proper emoji display
-chcp 65001 >nul
-
 :: Change to the directory of the batch file for portability
 cd /d "%~dp0"
 
