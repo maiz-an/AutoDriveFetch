@@ -1,5 +1,5 @@
 # Auto Drive Fetch – GitHub Pages installer
-$url = "https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/ADF_CLI.cmd"
+$url = "https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/ADF_CLI.cmd"
 $out = "$env:temp\ADF_CLI.cmd"
 
 try {
