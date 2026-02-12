@@ -92,7 +92,7 @@ def center_text(text, width=WIDTH):
 
 def print_header(title):
     print("="*WIDTH)
-    print(center_text(f"{c('🚀', 'cyan')}  {c(title, 'cyan', bold=True)}"))
+    print(center_text(f"{c('', 'cyan')}  {c(title, 'cyan', bold=True)}"))
     print(center_text(c(WATERMARK, 'magenta', bold=True)))
     print(center_text(c(f"v{__version__}", 'white'))) 
     print("="*WIDTH)
@@ -420,13 +420,13 @@ def is_admin():
 def auto_authentication():
     if is_admin():
         print_separator()
-        print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
+        print_header("🔐 GOOGLE DRIVE AUTHENTICATION")
         print_info(" Running as Administrator – automatic authentication not available.")
         print_info(" Switching to enhanced manual authentication (config will be auto‑copied).\n")
         return False
 
     print_separator()
-    print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
+    print_header("🔐 GOOGLE DRIVE AUTHENTICATION")
     log_event("AUTH", "Starting automatic authentication (non-admin)")
 
     print_info("A browser window will open automatically.")
@@ -477,7 +477,7 @@ def find_and_copy_config():
 
 def manual_authentication():
     print_separator()
-    print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
+    print_header("🔐 GOOGLE DRIVE AUTHENTICATION")
     log_event("AUTH", "Starting manual authentication")
 
     print("\n" + center_text("1️  Open a Command Prompt (Win+R → cmd → Enter)"))
@@ -692,7 +692,7 @@ Loop
         old_shortcut = startup_folder / SHORTCUT_NAME.format(local_name)
         if old_shortcut.exists():
             old_shortcut.unlink()
-            print_info("Removed old startup shortcut.")
+            print_info(" Removed old startup shortcut.")
 
         ps_script = f'''
 $WScriptShell = New-Object -ComObject WScript.Shell
@@ -708,13 +708,13 @@ $shortcut.Save()
 
         # Start the loop
         subprocess.Popen(["wscript.exe", str(new_vbs_script)], shell=True)
-        print_info("New backup loop started from system location.")
+        print_info(" New backup loop started from system location.")
 
         # Add Defender/Firewall exclusions
         add_defender_firewall_exclusions(new_sync_script, new_vbs_script)
 
         print_success("System installation complete!")
-        print_info("You may now delete the original BackUpSetub folder.")
+        print_info(" You may now delete the original BackUpSetub folder.")
         return True
 
     except Exception as e:
@@ -731,7 +731,7 @@ def log_sync_result(proc, local_path, remote_path):
 def main():
     log_event("SESSION_START", "Google Drive Backup Setup started")
     
-    print_header("AUTO DRIVE FETCH")
+    print_header("🚀 AUTO DRIVE FETCH")
     print_subheader("One click setup • 5 min sync • Portable • Zero login")
     print_separator()
 
@@ -786,7 +786,7 @@ def main():
     print_step(5, "Configuring destination subfolder in Google Drive")
     folder_name = load_subfolder_name()
     if folder_name is None:
-        print_info("This subfolder will be created inside the parent folder.\n")
+        print_info(" This subfolder will be created inside the parent folder.\n")
         folder_name = input(c("   📁 Enter name for NEW subfolder: ", "cyan")).strip()
         if not folder_name:
             folder_name = "Backup"
@@ -812,7 +812,7 @@ def main():
 
     # ---------- LOCAL FOLDER SELECTION ----------
     print_step(6, "Selecting local folder to back up")
-    print_info("Opening Windows folder picker...")
+    print_info(" Opening Windows folder picker...")
     
     selected_path = pick_local_folder()
     if selected_path:
@@ -860,7 +860,7 @@ Loop
     log_event("VBS_CREATED", f"VBS loop script created: {vbs_script}")
 
     print_step(9, "Adding to Windows Startup")
-    print_info("This makes the backup start automatically when you log in.")
+    print_info(" This makes the backup start automatically when you log in.")
     if create_startup_shortcut(vbs_script, local_name):
         print_success("Shortcut added to Startup folder.")
     else:
@@ -868,13 +868,13 @@ Loop
         print_info(f"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")
 
     print_step(10, "Starting backup loop")
-    print_info("The sync will now run every 5 minutes in the background.")
+    print_info(" The sync will now run every 5 minutes in the background.")
     subprocess.Popen(["wscript.exe", str(vbs_script)], shell=True)
     print_success("Sync loop started.")
     log_event("LOOP_STARTED", "Background sync loop initiated")
 
     print_step(11, "Initial sync")
-    print("Uploading existing files to Google Drive...\n")
+    print("   Uploading existing files to Google Drive...\n")
     sync_proc = subprocess.run(
         [str(RCLONE_EXE), "--config", str(RCLONE_CONFIG), "sync", str(local_path), remote_path, "--progress"],
         capture_output=True
@@ -890,7 +890,7 @@ Loop
 
     # ---------- FINAL SUMMARY ----------
     print_separator()
-    print_header("SETUP COMPLETE – EVERYTHING IS WORKING ✅")
+    print_header("          SETUP COMPLETE ✅        ")
     print(f"   {c('📁', 'cyan')}  Local folder:  {c(local_path, 'white', bold=True)}")
     print(f"   {c('☁️', 'cyan')}   Drive folder:  {c(remote_path, 'white', bold=True)}")
     print("\n   " + c("⏱️  Automatic sync:", 'yellow', bold=True))
