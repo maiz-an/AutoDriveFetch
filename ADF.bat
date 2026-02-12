@@ -2,7 +2,7 @@
 if "%1" == "internal" goto :main
 
 :: Launch in a new CMD window with custom appearance (no admin needed)
-start "Auto Drive Fetch Setup" cmd /k "mode con: cols=120 lines=40 & color 0A & "%~f0" internal"
+start "Auto Drive Fetch" cmd /k "mode con: cols=120 lines=40 & color 0A & "%~f0" internal"
 exit
 
 :main
@@ -15,11 +15,10 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 :: ---------- BEAUTIFUL TERMINAL ----------
-title Auto Drive Fetch Setup
+title Auto Drive Fetch
 
 :: ---------- SET CONSOLE FONT TO KALI STYLE (CONSOLAS, SMALLER) ----------
-powershell -Command "& { try { Add-Type -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool SetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool bMaximumWindow, ref CONSOLE_FONT_INFOEX lpConsoleCurrentFontEx); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetStdHandle(int nStdHandle);' -Name 'ConsoleFont' -Namespace 'Win32'; $handle = [Win32.ConsoleFont]::GetStdHandle(-11); $fontInfo = New-Object -TypeName PSObject -Property @{ cbSize = 84; nFont = 0; dwFontSize = 10; FontFamily = 54; FontWeight = 400; FaceName = 'Consolas' }; [Win32.ConsoleFont]::SetCurrentConsoleFontEx($handle, $false, [ref]$fontInfo) } catch {} }" >nul 2>&1
-
+powershell -Command "& { try { Add-Type -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool SetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool bMaximumWindow, ref CONSOLE_FONT_INFOEX lpConsoleCurrentFontEx); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetStdHandle(int nStdHandle); public struct COORD { public short X; public short Y; } public struct CONSOLE_FONT_INFOEX { public int cbSize; public int nFont; public COORD dwFontSize; public int FontFamily; public int FontWeight; [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string FaceName; }' -Name 'ConsoleFont2' -Namespace 'Win32'; $handle = [Win32.ConsoleFont2]::GetStdHandle(-11); $fontInfo = New-Object Win32.ConsoleFont2+CONSOLE_FONT_INFOEX; $fontInfo.cbSize = [System.Runtime.InteropServices.Marshal]::SizeOf($fontInfo); $fontInfo.nFont = 0; $fontInfo.dwFontSize = New-Object Win32.ConsoleFont2+COORD; $fontInfo.dwFontSize.X = 4; $fontInfo.dwFontSize.Y = 6; $fontInfo.FontFamily = 0; $fontInfo.FontWeight = 400; $fontInfo.FaceName = 'Terminal'; [Win32.ConsoleFont2]::SetCurrentConsoleFontEx($handle, $false, [ref]$fontInfo) } catch {} }" >nul 2>&1
 cls
 echo.
 echo ============================================================

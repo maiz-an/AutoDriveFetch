@@ -387,13 +387,13 @@ def is_admin():
 def auto_authentication():
     if is_admin():
         print_separator()
-        print_header("🔐  GOOGLE DRIVE AUTHENTICATION")
+        print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
         print_info("Running as Administrator – automatic authentication not available.")
         print_info("Switching to enhanced manual authentication (config will be auto‑copied).\n")
         return False
 
     print_separator()
-    print_header("🔐  GOOGLE DRIVE AUTHENTICATION")
+    print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
     log_event("AUTH", "Starting automatic authentication (non-admin)")
 
     print_info("A browser window will open automatically.")
@@ -444,7 +444,7 @@ def find_and_copy_config():
 
 def manual_authentication():
     print_separator()
-    print_header("🔐  GOOGLE DRIVE AUTHENTICATION")
+    print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
     log_event("AUTH", "Starting manual authentication")
 
     print("\n" + center_text("1️⃣  Open a Command Prompt (Win+R → cmd → Enter)"))
@@ -819,7 +819,7 @@ Loop
     install_to_system(local_name, sync_script, vbs_script, remote_path, local_path)
 
     print_separator()
-    print_header("✅  SETUP COMPLETE – EVERYTHING IS WORKING")
+    print_header("SETUP COMPLETE – EVERYTHING IS WORKING ✅")
     print(f"   {c('📁', 'cyan')}  Local folder:  {c(local_path, 'white', bold=True)}")
     print(f"   {c('☁️', 'cyan')}   Drive folder:  {c(remote_path, 'white', bold=True)}")
     print("\n   " + c("⏱️  Automatic sync:", 'yellow', bold=True))
