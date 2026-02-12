@@ -41,7 +41,7 @@ set PYTHON_SCRIPT=Source\gdrive_backup_setup.py
 :: Google Drive file ID for the Python script
 set SCRIPT_DL_ID=1TfNKgA-X6Omniqtc3yQEJ0F_EX2NmCqq
 :: URL with escaped & (^&) to prevent batch from breaking
-set SCRIPT_DL_URL=https://drive.usercontent.google.com/download?id=%SCRIPT_DL_ID%^&confirm=t
+set SCRIPT_DL_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/gdrive_backup_setup.py
 :: =====================================
 
 :: ------------------------------------------------------------------
