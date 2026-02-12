@@ -1,14 +1,13 @@
-# Auto Drive Fetch – One‑line installer from GitHub Pages
-$rawUrl = "https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/ADF_CLI.cmd"
-$outFile = "$env:temp\ADF_CLI.cmd"
+# Auto Drive Fetch – GitHub Pages installer
+$url = "https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/ADF_CLI.cmd"
+$out = "$env:temp\ADF_CLI.cmd"
 
 try {
-    # Add cache‑buster to force fresh download
-    $cacheBuster = "?cachebust=$([guid]::NewGuid())"
-    Invoke-WebRequest -Uri "$rawUrl$cacheBuster" -OutFile $outFile -UseBasicParsing
-    if (Test-Path $outFile) {
+    Write-Host "Downloading Auto Drive Fetch..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+    if (Test-Path $out) {
         Write-Host "✅ Download successful. Starting installer..." -ForegroundColor Green
-        Start-Process $outFile -Wait
+        Start-Process $out -Wait
     }
 }
 catch {
