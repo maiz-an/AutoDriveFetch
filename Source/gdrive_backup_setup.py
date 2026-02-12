@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "1.1.0"   # Version bumped for settings persistence
+__version__ = "1.1.1"   # Version bumped for settings persistence
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -279,7 +279,7 @@ def download_rclone_zip():
         return True
 
     print_step("dl", "Rclone.zip not found – attempting download")
-    print_info("Source: Google Drive (your shared link)")
+    print_info(" Source: Google Drive (your shared link)")
     
     file_id = "16QfRsPGhQKBJPg1p2ovdhv1R2IhOvp7R"
     gdrive_url = f"https://drive.usercontent.google.com/download?id={file_id}&confirm=t"
@@ -420,8 +420,8 @@ def auto_authentication():
     if is_admin():
         print_separator()
         print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
-        print_info("Running as Administrator – automatic authentication not available.")
-        print_info("Switching to enhanced manual authentication (config will be auto‑copied).\n")
+        print_info(" Running as Administrator – automatic authentication not available.")
+        print_info(" Switching to enhanced manual authentication (config will be auto‑copied).\n")
         return False
 
     print_separator()
@@ -479,11 +479,11 @@ def manual_authentication():
     print_header("GOOGLE DRIVE AUTHENTICATION 🔐")
     log_event("AUTH", "Starting manual authentication")
 
-    print("\n" + center_text("1️⃣  Open a Command Prompt (Win+R → cmd → Enter)"))
-    print("\n" + center_text("2️⃣  Copy and paste this command, then press Enter:"))
+    print("\n" + center_text("1️  Open a Command Prompt (Win+R → cmd → Enter)"))
+    print("\n" + center_text("2️  Copy and paste this command, then press Enter:"))
     print("\n" + center_text(c(f'"{RCLONE_EXE}" config create gdrive drive', 'cyan')))
-    print("\n" + center_text("3️⃣  Browser opens → Login → Allow → Code is captured automatically"))
-    print("\n" + center_text("4️⃣  After you see 'Success!', return here and press Enter."))
+    print("\n" + center_text("3️  Browser opens → Login → Allow → Code is captured automatically"))
+    print("\n" + center_text("4️  After you see 'Success!', return here and press Enter."))
     print()
     
     input(center_text(c("👉  Press Enter AFTER authentication complete...", "cyan")))
