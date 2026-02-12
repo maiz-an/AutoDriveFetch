@@ -23,6 +23,8 @@ import re
 import tempfile
 from pathlib import Path
 
+__version__ = "1.0.0"
+
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
 ROOT_DIR = SCRIPT_DIR.parent.resolve()
@@ -720,7 +722,7 @@ def main():
         save_parent_folder(parent_folder)
         print_success(f"Parent folder set to: {parent_folder}")
     else:
-        print_info(f"Using saved parent folder: {c(parent_folder, 'cyan', bold=True)}")
+        print_info(f" Using saved parent folder: {c(parent_folder, 'cyan', bold=True)}")
     
     print_step(5, "Creating destination subfolder")
     print_info(f" Parent folder: {c(parent_folder, 'cyan', bold=True)}")

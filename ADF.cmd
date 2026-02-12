@@ -29,6 +29,7 @@ set INSTALLER=%temp%\python-installer.exe
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\gdrive_backup_setup.py
 set SCRIPT_DL_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/gdrive_backup_setup.py
+set VERSION_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/version.txt
 :: =====================================
 
 :: ---------- CREATE SOURCE FOLDER ----------
@@ -97,7 +98,7 @@ if %errorlevel% neq 0 (
 )
 
 :: ------------------------------------------------------------------
-:: 4. DOWNLOAD PYTHON SCRIPT IF MISSING
+:: 4. DOWNLOAD OR UPDATE PYTHON SCRIPT
 :: ------------------------------------------------------------------
 :CHECK_SCRIPT
 if not exist "!PYTHON_SCRIPT!" (
@@ -114,12 +115,55 @@ if not exist "!PYTHON_SCRIPT!" (
         exit /b 1
     ) else (
         echo Download complete.
+        goto :RUN_SCRIPT
     )
 )
 
 :: ------------------------------------------------------------------
-:: 5. LAUNCH THE MAIN APPLICATION
+:: 5. VERSION CHECK & AUTO-UPDATE
 :: ------------------------------------------------------------------
+:VERSION_CHECK
+echo Checking for updates...
+
+:: Get local version
+set LOCAL_VERSION=
+for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, '%~dp0Source'); import gdrive_backup_setup; print(gdrive_backup_setup.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
+if "%LOCAL_VERSION%"=="" (
+    echo Could not determine local version – skipping update check.
+    goto :RUN_SCRIPT
+)
+echo Local version: %LOCAL_VERSION%
+
+:: Get remote version
+set REMOTE_VERSION=
+for /f "delims=" %%i in ('powershell -Command "(New-Object System.Net.WebClient).DownloadString('%VERSION_URL%').Trim()" 2^>nul') do set REMOTE_VERSION=%%i
+if "%REMOTE_VERSION%"=="" (
+    echo Could not fetch remote version – skipping update.
+    goto :RUN_SCRIPT
+)
+echo Remote version: %REMOTE_VERSION%
+
+:: Compare versions (using PowerShell's System.Version)
+powershell -Command "$local='%LOCAL_VERSION%'; $remote='%REMOTE_VERSION%'; if ([System.Version]$local -lt [System.Version]$remote) { exit 0 } else { exit 1 }"
+if !errorlevel! equ 0 (
+    echo New version available. Updating...
+    set TEMP_SCRIPT=!temp!\gdrive_backup_setup.tmp.py
+    powershell -Command "Invoke-WebRequest -Uri '%SCRIPT_DL_URL%' -OutFile '!TEMP_SCRIPT!' -UseBasicParsing"
+    if !errorlevel! equ 0 (
+        move /y "!TEMP_SCRIPT!" "!PYTHON_SCRIPT!" >nul
+        echo Update successful.
+    ) else (
+        echo Update download failed – using existing version.
+        del "!TEMP_SCRIPT!" 2>nul
+    )
+) else (
+    echo You have the latest version.
+)
+
+:: ------------------------------------------------------------------
+:: 6. LAUNCH THE MAIN APPLICATION
+:: ------------------------------------------------------------------
+:RUN_SCRIPT
 echo.
 echo Loading...
 timeout /t 2 /nobreak >nul
@@ -131,7 +175,7 @@ cls
 python -u "!PYTHON_SCRIPT!"
 
 :: ------------------------------------------------------------------
-:: 6. FINAL MESSAGE
+:: 7. FINAL MESSAGE
 :: ------------------------------------------------------------------
 echo.
 echo ============================================================
