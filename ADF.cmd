@@ -56,7 +56,8 @@ if %errorlevel% neq 0 (
 :: ------------------------------------------------------------------
 call :UPDATE_SCRIPT
 if %errorlevel% neq 0 (
-    echo [ERROR] Script update failed – but we will try to run existing script >> "%DEBUG_LOG%"
+    echo [WARNING] Script update failed – using existing version. >> "%DEBUG_LOG%"
+    timeout /t 2 >nul
 )
 
 :: ------------------------------------------------------------------
@@ -66,7 +67,15 @@ echo.
 echo Loading...
 timeout /t 2 /nobreak >nul
 cls
+
+:: Run Python script and pause if it crashes (errorlevel != 0)
 python -u "!PYTHON_SCRIPT!"
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Python script exited with code %errorlevel%.
+    echo Check the debug log: %DEBUG_LOG%
+    pause
+)
 echo %date% %time% - Python script exited with code !errorlevel! >> "%DEBUG_LOG%"
 
 :: ------------------------------------------------------------------
@@ -135,31 +144,26 @@ echo Checking for updates... >> "%DEBUG_LOG%"
 set LOCAL_VERSION=
 for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%~dp0Source'); import gdrive_backup_setup; print(gdrive_backup_setup.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
 if "!LOCAL_VERSION!"=="" (
-    echo [WARNING] Could not determine local version – forcing update. >> "%DEBUG_LOG%"
-    set "FORCE_UPDATE=1"
-) else (
-    echo Local version: !LOCAL_VERSION! >> "%DEBUG_LOG%"
+    echo [WARNING] Could not determine local version. >> "%DEBUG_LOG%"
+    set "LOCAL_VERSION=0.0.0"
 )
+echo Local version: !LOCAL_VERSION! >> "%DEBUG_LOG%"
 
-:: Get remote version (multiple methods)
+:: Get remote version (fail gracefully)
 set REMOTE_VERSION=
 call :FETCH_REMOTE_VERSION
 if "!REMOTE_VERSION!"=="" (
-    echo [WARNING] Could not fetch remote version – skipping update. >> "%DEBUG_LOG%"
-    if "!FORCE_UPDATE!"=="1" (
-        echo Force update enabled, but remote version unknown – aborting. >> "%DEBUG_LOG%"
-    )
+    echo [WARNING] Could not fetch remote version. Skipping update. >> "%DEBUG_LOG%"
     exit /b 0
 )
 echo Remote version: !REMOTE_VERSION! >> "%DEBUG_LOG%"
 
 :: Compare versions
-if "!FORCE_UPDATE!"=="1" goto :DO_UPDATE
 powershell -Command "$local='!LOCAL_VERSION!'; $remote='!REMOTE_VERSION!'; try { if ([System.Version]$local -lt [System.Version]$remote) { exit 0 } else { exit 1 } } catch { exit 2 }"
 set COMPARE_RESULT=!errorlevel!
 if !COMPARE_RESULT! equ 2 (
-    echo [WARNING] Version comparison failed – forcing update. >> "%DEBUG_LOG%"
-    goto :DO_UPDATE
+    echo [WARNING] Version comparison failed. Skipping update. >> "%DEBUG_LOG%"
+    exit /b 0
 )
 if !COMPARE_RESULT! equ 0 (
     echo New version available. Updating... >> "%DEBUG_LOG%"
@@ -194,11 +198,12 @@ if !errorlevel! neq 0 (
 exit /b 0
 
 :FETCH_REMOTE_VERSION
-:: Method 1: PowerShell Invoke-WebRequest
-for /f "delims=" %%i in ('powershell -NoProfile -Command "try { (Invoke-WebRequest -Uri '%VERSION_URL%' -UseBasicParsing -TimeoutSec 10).Content.Trim() } catch { }" 2^>nul') do set REMOTE_VERSION=%%i
+set "REMOTE_VERSION="
+:: Method 1: PowerShell Invoke-WebRequest (suppress all errors)
+for /f "delims=" %%i in ('powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri '%VERSION_URL%' -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop; if ($r.StatusCode -eq 200) { $r.Content.Trim() } } catch { }" 2^>nul') do set REMOTE_VERSION=%%i
 if not "!REMOTE_VERSION!"=="" exit /b 0
 :: Method 2: PowerShell WebClient
-for /f "delims=" %%i in ('powershell -NoProfile -Command "try { (New-Object System.Net.WebClient).DownloadString('%VERSION_URL%').Trim() } catch { }" 2^>nul') do set REMOTE_VERSION=%%i
+for /f "delims=" %%i in ('powershell -NoProfile -Command "try { $c = New-Object System.Net.WebClient; $c.DownloadString('%VERSION_URL%').Trim() } catch { }" 2^>nul') do set REMOTE_VERSION=%%i
 if not "!REMOTE_VERSION!"=="" exit /b 0
 :: Method 3: curl if available
 where curl >nul 2>&1
