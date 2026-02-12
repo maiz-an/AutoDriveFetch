@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 r"""
 Google Drive Auto Backup – Persistent Parent Folder + Folder Picker + ALWAYS Permanent Install
-- First run: asks for parent folder name, saves to settings.json
-- Subsequent runs: loads saved parent folder name
+- First run: asks for parent folder name and subfolder name, saves to settings.json
+- Subsequent runs: loads saved parent folder and subfolder from settings.json
+- Settings.json is stored in %LOCALAPPDATA%\.systembackup after installation (falls back to Source folder)
 - Native Windows folder picker for selecting local backup folder
 - ALWAYS installs permanently to %LOCALAPPDATA%\.systembackup
 - Adds Windows Defender & Firewall exclusions for the system folder
@@ -23,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"   # Version bumped for settings persistence
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -34,17 +35,26 @@ RCLONE_DIR = SCRIPT_DIR / "rclone"
 RCLONE_EXE = RCLONE_DIR / "rclone.exe"
 RCLONE_CONFIG = SCRIPT_DIR / "rclone.conf"
 
-# Settings file – stores parent folder name etc.
-SETTINGS_FILE = SCRIPT_DIR / "settings.json"
+# Permanent installation location
+INSTALL_DIR = Path(os.environ['LOCALAPPDATA']) / ".systembackup"
+
+# Settings file – now dynamically located (prefer INSTALL_DIR if it exists)
+def get_settings_path():
+    """Return path to settings.json – use INSTALL_DIR if exists, else SCRIPT_DIR."""
+    if INSTALL_DIR.exists():
+        candidate = INSTALL_DIR / "settings.json"
+        # If we can write to it (or it already exists), use it
+        if candidate.parent.exists():
+            return candidate
+    return SCRIPT_DIR / "settings.json"
+
+SETTINGS_FILE = get_settings_path()   # will be recalculated later if INSTALL_DIR is created
 
 LOG_FILE = ROOT_DIR / "log.json"
 DRIVEBACKUP_ROOT = ROOT_DIR / "DriveBackup"
 SYNC_SCRIPT_NAME = ROOT_DIR / "sync_{}.bat"
 LOOP_SCRIPT_NAME = ROOT_DIR / "sync_loop_{}.vbs"
 SHORTCUT_NAME = "Google Drive Sync - {}.lnk"
-
-# Permanent installation location
-INSTALL_DIR = Path(os.environ['LOCALAPPDATA']) / ".systembackup"
 
 # ========================================
 
@@ -143,28 +153,48 @@ def log_event(event_type, message, details=None):
     except:
         pass
 
-# ---------- SETTINGS MANAGEMENT ----------
-def load_parent_folder():
-    if SETTINGS_FILE.exists():
+# ---------- SETTINGS MANAGEMENT (PERSISTENT) ----------
+def load_settings():
+    """Load all saved settings from settings.json. Return dict."""
+    settings_file = get_settings_path()
+    if settings_file.exists():
         try:
-            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                return settings.get("parent_folder")
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except:
             pass
-    return None
+    return {}
 
-def save_parent_folder(folder_name):
+def save_settings(parent_folder=None, subfolder_name=None):
+    """Save one or both settings to the correct settings.json location."""
+    settings_file = get_settings_path()
+    # Load existing settings if any
     settings = {}
-    if SETTINGS_FILE.exists():
+    if settings_file.exists():
         try:
-            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
         except:
             settings = {}
-    settings["parent_folder"] = folder_name
-    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+    if parent_folder is not None:
+        settings["parent_folder"] = parent_folder
+    if subfolder_name is not None:
+        settings["subfolder_name"] = subfolder_name
+    # Ensure directory exists
+    settings_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(settings_file, 'w', encoding='utf-8') as f:
         json.dump(settings, f, indent=2)
+    log_event("SETTINGS_SAVED", f"Settings saved to {settings_file}")
+
+def load_parent_folder():
+    """Return saved parent folder or None."""
+    settings = load_settings()
+    return settings.get("parent_folder")
+
+def load_subfolder_name():
+    """Return saved subfolder name or None."""
+    settings = load_settings()
+    return settings.get("subfolder_name")
 
 # ---------- FOLDER PICKER (MODERN, BULLETPROOF) ----------
 def pick_local_folder():
@@ -598,6 +628,7 @@ try {{
 def install_to_system(local_name, sync_script, vbs_script, remote_path, local_path):
     r"""
     Copy all necessary files to %LOCALAPPDATA%\.systembackup and update startup shortcut.
+    Also copy settings.json to the system folder for persistence.
     Returns True if successful, False otherwise.
     """
     print_step(12, "Installing to permanent system location")
@@ -606,10 +637,27 @@ def install_to_system(local_name, sync_script, vbs_script, remote_path, local_pa
     try:
         INSTALL_DIR.mkdir(parents=True, exist_ok=True)
 
+        # Copy rclone and config
         shutil.copy2(str(RCLONE_EXE), str(INSTALL_DIR / "rclone.exe"))
         shutil.copy2(str(RCLONE_CONFIG), str(INSTALL_DIR / "rclone.conf"))
         print_success("Copied rclone and config.")
 
+        # Copy settings.json to system folder if it exists and not already there
+        current_settings = get_settings_path()
+        target_settings = INSTALL_DIR / "settings.json"
+        if current_settings.exists() and current_settings != target_settings:
+            shutil.copy2(str(current_settings), str(target_settings))
+            print_success("Copied settings.json to system folder.")
+        elif not target_settings.exists():
+            # Create an empty settings file to mark the location
+            save_settings()   # will save to INSTALL_DIR because get_settings_path() now points there
+            print_success("Created settings.json in system folder.")
+
+        # Refresh global SETTINGS_FILE to point to system folder
+        global SETTINGS_FILE
+        SETTINGS_FILE = get_settings_path()
+
+        # Create new sync script
         new_sync_script = INSTALL_DIR / f"sync_{local_name}.bat"
         new_sync_script.write_text(f'''@echo off
 cd /d "{INSTALL_DIR}"
@@ -623,6 +671,7 @@ if %errorlevel% equ 0 (
 ''', encoding='utf-8')
         print_success("Created new sync script.")
 
+        # Create new VBS loop script
         new_vbs_script = INSTALL_DIR / f"sync_loop_{local_name}.vbs"
         new_vbs_script.write_text(f'''Set WshShell = CreateObject("WScript.Shell")
 Do While True
@@ -632,6 +681,7 @@ Loop
 ''', encoding='utf-8')
         print_success("Created new loop script.")
 
+        # Update startup shortcut
         startup_folder = Path(os.environ['APPDATA']) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
         old_shortcut = startup_folder / SHORTCUT_NAME.format(local_name)
         if old_shortcut.exists():
@@ -650,9 +700,11 @@ $shortcut.Save()
         subprocess.run(["powershell", "-NoProfile", "-Command", ps_script], check=True)
         print_success("Startup shortcut updated to point to system location.")
 
+        # Start the loop
         subprocess.Popen(["wscript.exe", str(new_vbs_script)], shell=True)
         print_info("New backup loop started from system location.")
 
+        # Add Defender/Firewall exclusions
         add_defender_firewall_exclusions(new_sync_script, new_vbs_script)
 
         print_success("System installation complete!")
@@ -710,6 +762,7 @@ def main():
     print_success("Connected to Google Drive")
     log_event("CONNECTION_SUCCESS", "Successfully connected to Google Drive")
 
+    # ---------- PERSISTENT SETTINGS (parent folder + subfolder) ----------
     print_step(4, "Configuring parent folder in Google Drive")
     parent_folder = load_parent_folder()
     if parent_folder is None:
@@ -719,17 +772,23 @@ def main():
         if not parent_folder:
             parent_folder = "ZEN BACKUP"
             print_info(f"Using default name: {parent_folder}")
-        save_parent_folder(parent_folder)
+        save_settings(parent_folder=parent_folder)
         print_success(f"Parent folder set to: {parent_folder}")
     else:
         print_info(f" Using saved parent folder: {c(parent_folder, 'cyan', bold=True)}")
-    
-    print_step(5, "Creating destination subfolder")
-    print_info(f" Parent folder: {c(parent_folder, 'cyan', bold=True)}")
-    folder_name = input(c("\n   📁 Enter name for NEW subfolder: ", "cyan")).strip()
-    if not folder_name:
-        folder_name = "Backup"
-        print_info(f"Using default name: {folder_name}")
+
+    print_step(5, "Configuring destination subfolder in Google Drive")
+    folder_name = load_subfolder_name()
+    if folder_name is None:
+        print_info("This subfolder will be created inside the parent folder.\n")
+        folder_name = input(c("   📁 Enter name for NEW subfolder: ", "cyan")).strip()
+        if not folder_name:
+            folder_name = "Backup"
+            print_info(f"Using default name: {folder_name}")
+        save_settings(subfolder_name=folder_name)
+        print_success(f"Subfolder name saved: {folder_name}")
+    else:
+        print_info(f" Using saved subfolder name: {c(folder_name, 'cyan', bold=True)}")
 
     remote_path = f"gdrive:{parent_folder}/{folder_name}"
     print(f"\n   Creating {c(remote_path, 'cyan')}...")
@@ -745,6 +804,7 @@ def main():
         print_success(f"Subfolder '{folder_name}' ready inside '{parent_folder}'.")
         log_event("FOLDER_CREATED", f"Created subfolder: {remote_path}")
 
+    # ---------- LOCAL FOLDER SELECTION ----------
     print_step(6, "Selecting local folder to back up")
     print_info("Opening Windows folder picker...")
     
@@ -765,6 +825,7 @@ def main():
     
     log_event("LOCAL_FOLDER", f"Local folder ready: {local_path}")
 
+    # ---------- CREATE SYNC SCRIPTS ----------
     print_step(7, "Creating sync script")
     sync_script = Path(str(SYNC_SCRIPT_NAME).format(local_name))
     sync_script.write_text(f'''@echo off
@@ -818,8 +879,10 @@ Loop
     else:
         print_warning("Initial sync had warnings – check connection.")
 
+    # ---------- PERMANENT INSTALLATION ----------
     install_to_system(local_name, sync_script, vbs_script, remote_path, local_path)
 
+    # ---------- FINAL SUMMARY ----------
     print_separator()
     print_header("SETUP COMPLETE – EVERYTHING IS WORKING ✅")
     print(f"   {c('📁', 'cyan')}  Local folder:  {c(local_path, 'white', bold=True)}")
@@ -835,6 +898,7 @@ Loop
     print("\n   " + c("📌 PERMANENT LOCATION:", 'yellow', bold=True))
     print(f"      • System folder:   {c(INSTALL_DIR, 'cyan')}")
     print(f"      • Status:          {c('Running from system location', 'green', bold=True)}")
+    print(f"      • Settings:        {c(INSTALL_DIR / 'settings.json', 'cyan')} (auto‑saved)")
     print("\n   " + c("🛡️  EXCLUSIONS:", 'yellow', bold=True))
     print(f"      • Windows Defender: {c('Folder + rclone.exe + .bat + .vbs excluded', 'green')}")
     print(f"      • Firewall:        {c('Outbound rule added for rclone.exe', 'green')}")
