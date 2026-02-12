@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 r"""
 Google Drive Auto Backup – Persistent Parent Folder + Folder Picker + ALWAYS Permanent Install
-- First run: asks for parent folder name and subfolder name, saves to settings.json
-- Subsequent runs: loads saved parent folder and subfolder from settings.json
+- First run: asks for parent folder name, saves to settings.json
+- Subsequent runs: loads saved parent folder (subfolder name is asked every time)
 - Settings.json is stored in %LOCALAPPDATA%\.systembackup after installation (falls back to Source folder)
 - Native Windows folder picker for selecting local backup folder
 - ALWAYS installs permanently to %LOCALAPPDATA%\.systembackup
@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -80,7 +80,7 @@ def c(text, color=None, bold=False):
 def strip_ansi(text):
     return re.sub(r'\033\[[0-9;]*m', '', text)
 
-WATERMARK = "⚡ Powered by Maiz"
+WATERMARK = "  ⚡ Powered by Maiz"
 WIDTH = 80
 
 def center_text(text, width=WIDTH):
@@ -166,7 +166,7 @@ def load_settings():
             pass
     return {}
 
-def save_settings(parent_folder=None, subfolder_name=None):
+def save_settings(parent_folder=None):
     """Save one or both settings to the correct settings.json location."""
     settings_file = get_settings_path()
     # Load existing settings if any
@@ -191,11 +191,6 @@ def load_parent_folder():
     """Return saved parent folder or None."""
     settings = load_settings()
     return settings.get("parent_folder")
-
-def load_subfolder_name():
-    """Return saved subfolder name or None."""
-    settings = load_settings()
-    return settings.get("subfolder_name")
 
 # ---------- FOLDER PICKER (MODERN, BULLETPROOF) ----------
 def pick_local_folder():
@@ -633,7 +628,7 @@ def install_to_system(local_name, sync_script, vbs_script, remote_path, local_pa
     Returns True if successful, False otherwise.
     """
     print_step(12, "Installing to permanent system location")
-    print_info(f"Target directory: {INSTALL_DIR}")
+    print_info(f" Target directory: {INSTALL_DIR}")
 
     try:
         INSTALL_DIR.mkdir(parents=True, exist_ok=True)
@@ -784,17 +779,13 @@ def main():
         print_info(f" Using saved parent folder: {c(parent_folder, 'cyan', bold=True)}")
 
     print_step(5, "Configuring destination subfolder in Google Drive")
-    folder_name = load_subfolder_name()
-    if folder_name is None:
-        print_info(" This subfolder will be created inside the parent folder.\n")
-        folder_name = input(c("   📁 Enter name for NEW subfolder: ", "cyan")).strip()
-        if not folder_name:
-            folder_name = "Backup"
-            print_info(f"Using default name: {folder_name}")
-        save_settings(subfolder_name=folder_name)
-        print_success(f"Subfolder name saved: {folder_name}")
-    else:
-        print_info(f" Using saved subfolder name: {c(folder_name, 'cyan', bold=True)}")
+    print_info(" This subfolder will be created inside the parent folder.\n")
+    folder_name = input(c("   📁 Enter name for NEW subfolder: ", "cyan")).strip()
+    if not folder_name:
+        folder_name = "Backup"
+        print_info(f"Using default name: {folder_name}")
+    # Do NOT save subfolder name – it's asked every time
+    print_success(f"Subfolder will be: {folder_name}")
 
     remote_path = f"gdrive:{parent_folder}/{folder_name}"
     print(f"\n   Creating {c(remote_path, 'cyan')}...")
@@ -890,7 +881,7 @@ Loop
 
     # ---------- FINAL SUMMARY ----------
     print_separator()
-    print_header("          SETUP COMPLETE ✅        ")
+    print_header("         ✅ SETUP COMPLETE         ")
     print(f"   {c('📁', 'cyan')}  Local folder:  {c(local_path, 'white', bold=True)}")
     print(f"   {c('☁️', 'cyan')}   Drive folder:  {c(remote_path, 'white', bold=True)}")
     print("\n   " + c("⏱️  Automatic sync:", 'yellow', bold=True))

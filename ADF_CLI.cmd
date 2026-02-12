@@ -89,7 +89,7 @@ if !PY_EXIT! neq 0 (
 :: ------------------------------------------------------------------
 echo.
 echo ============================================================
-echo          SETUP PROCESS COMPLETED
+echo          ADF_CLI SETUP COMPLETED
 echo ============================================================
 echo    Debug log: %DEBUG_LOG%
 echo    Check it if something went wrong.
