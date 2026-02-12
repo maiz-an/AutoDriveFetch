@@ -1,6 +1,8 @@
-# 🚀 Auto Drive Fetch  
+<div align="center">
 
-*One command. Forever backup.*
+# 🚀 Auto Drive Fetch
+
+</div>
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-2.0.1-blue.svg" alt="Version 2.0.1">
@@ -10,7 +12,11 @@
 
 ---
 
-## 🛡️ Not for stealing files. For stealing peace of mind
+### 🛡️ Not for stealing files  
+
+### For stealing **peace of mind**
+
+###### ✦ One command. ✦ Forever backup. ✦ Zero login. ✦
 
 ---
 
