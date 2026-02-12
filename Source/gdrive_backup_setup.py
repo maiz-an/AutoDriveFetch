@@ -348,7 +348,7 @@ def extract_rclone():
         if not download_rclone_zip():
             return False
     
-    print("    Extracting rclone...")
+    print("Extracting rclone...")
     try:
         with zipfile.ZipFile(RCLONE_ZIP) as zf:
             zf.extractall(RCLONE_DIR)
