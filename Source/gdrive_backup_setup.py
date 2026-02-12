@@ -69,7 +69,7 @@ def strip_ansi(text):
     return re.sub(r'\033\[[0-9;]*m', '', text)
 
 WATERMARK = "⚡ Powered by Maiz"
-WIDTH = 70
+WIDTH = 80
 
 def center_text(text, width=WIDTH):
     plain = strip_ansi(text)

@@ -1,24 +1,18 @@
 @echo off
-
-:: ---------- AUTO-ELEVATE TO ADMIN ----------
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Requesting administrator privileges...
-    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
-    exit /b
-)
-:: ---------- NOW RUNNING AS ADMIN ----------
-
 setlocal enabledelayedexpansion
-
-:: ---------- SET CONSOLE SIZE TO 120x40 ----------
-mode con: cols=120 lines=40
 
 :: Set UTF-8 codepage for proper emoji display
 chcp 65001 >nul
 
 :: Change to the directory of the batch file for portability
 cd /d "%~dp0"
+
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting Administrator Access...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
 
 :: ---------- SIMPLE TERMINAL ----------
 title Auto Drive Fetch Setup
