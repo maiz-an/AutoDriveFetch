@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.0"   # Version bumped for settings persistence
+__version__ = "2.0.1"   # Version bumped for settings persistence
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
