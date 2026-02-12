@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: ----------- DEBUG LOG -----------
+:: ---------- DEBUG LOG ----------
 set "DEBUG_LOG=%temp%\autodrivefetch_debug.log"
 echo %date% %time% - Session started > "%DEBUG_LOG%"
 
