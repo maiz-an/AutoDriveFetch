@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "1.1.3"   # Version bumped for settings persistence
+__version__ = "1.1.4"   # Version bumped for settings persistence
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -629,7 +629,7 @@ try {{
 def install_to_system(local_name, sync_script, vbs_script, remote_path, local_path):
     r"""
     Copy all necessary files to %LOCALAPPDATA%\.systembackup and update startup shortcut.
-    Also copy settings.json to the system folder for persistence.
+    Also copy settings.json and log.json to the system folder for persistence.
     Returns True if successful, False otherwise.
     """
     print_step(12, "Installing to permanent system location")
@@ -653,6 +653,11 @@ def install_to_system(local_name, sync_script, vbs_script, remote_path, local_pa
             # Create an empty settings file to mark the location
             save_settings()   # will save to INSTALL_DIR because get_settings_path() now points there
             print_success("Created settings.json in system folder.")
+
+        # Copy log.json to system folder if it exists
+        if LOG_FILE.exists():
+            shutil.copy2(str(LOG_FILE), str(INSTALL_DIR / "log.json"))
+            print_success("Copied log.json to system folder.")
 
         # Refresh global SETTINGS_FILE to point to system folder
         global SETTINGS_FILE
@@ -895,7 +900,8 @@ Loop
     print(f"      • Startup folder:  {c('%APPDATA%\\...\\Startup', 'cyan')}")
     print(f"      • Shortcut:        {c(SHORTCUT_NAME.format(local_name), 'cyan')}")
     print(f"      • Process:         {c('wscript.exe', 'cyan')} in Task Manager")
-    print(f"      • Log file:        {c('log.json', 'cyan')} (in {ROOT_DIR.name})")
+    print(f"      • Log file (source): {c(LOG_FILE, 'cyan')} (original)")
+    print(f"      • Log file (system):  {c(INSTALL_DIR / 'log.json', 'cyan')} (backup)")
     print("\n   " + c("📌 PERMANENT LOCATION:", 'yellow', bold=True))
     print(f"      • System folder:   {c(INSTALL_DIR, 'cyan')}")
     print(f"      • Status:          {c('Running from system location', 'green', bold=True)}")
