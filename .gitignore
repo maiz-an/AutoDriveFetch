@@ -1,4 +1,5 @@
 Source/rclone.conf
 Source/Rclone.zip
+Source/__pycache__
 rclone
 log.json
