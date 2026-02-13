@@ -141,6 +141,9 @@ Source\
 
 ````
 
+<img width="600" height="448" alt="Screenshot 2026-02-13 141707" src="https://github.com/user-attachments/assets/f11772cf-e677-4be7-833e-f76a9fc322d3" />
+
+
 1. Paste it onto the new PC  
 2. Run: (Double Click)
 
@@ -155,7 +158,7 @@ ADF_CLI.cmd
 On the new PC:
 
 * It will NOT ask for Google login again
-* It will only ask you to enter a **Child Folder Name** (subfolder)
+* It will only ask you to enter a **Parent Folder name** (next time it will not ask parent folder name) and **Sub Folder name**
 
 Example:
 
@@ -166,35 +169,6 @@ HomePC
 ```
 
 Then Auto Drive Fetch will automatically complete setup and start syncing instantly.
-
----
-
-✅ That’s it — Copy, Run, Type Folder Name, Done.
-
-# 🔐 First Run = Only Time Login is Needed
-
-On the very first run:
-
-1. rclone opens a browser popup
-2. You login once to Google Drive
-3. Token + config is saved inside:
-
-```
-Source\rclone.conf
-```
-
-After this…
-
-✅ You will NEVER need to login again
-(as long as you keep the folder)
-
----
-
-# 📦 Portable Pack Builder (Best Feature)
-
-Auto Drive Fetch is not just an installer…
-
-It can become a **portable backup engine** 😈
 
 ---
 
