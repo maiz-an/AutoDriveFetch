@@ -227,13 +227,9 @@ Now Auto Drive Fetch becomes:
 ✅ No login
 ✅ No setup again
 
-##
-
-##
+---
 
 # 🛠️ Features
-
-##
 
 ## 🏗️ Permanent Installation
 
