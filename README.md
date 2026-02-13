@@ -109,12 +109,6 @@ Once the browser login is completed:
 * Press **Enter** two times
 * The installer will ask you to enter a **Parent Folder Name** (this is created in Google Drive)
 
-Example:
-
-```
-ROOT
-```
-
 <img width="600" height="763" alt="Parent Folder Setup" src="https://github.com/user-attachments/assets/9e4d1268-5418-4728-932c-6c572b573f4b" />
 
 ---
@@ -123,54 +117,61 @@ ROOT
 
 After this step, Auto Drive Fetch is fully installed.
 
-You may now close the installer window safely.
+You can close the ADF_CLI.cmdwindow safely.
 
 ---
 
-# 📦 Portable Copy Mode (Most Powerful Feature)
+## ✅ Just Copy → Paste → Run
 
-Once setup is finished on one PC, you can reuse Auto Drive Fetch anywhere.
-
----
-
-## ✅ Now You Can Copy It Anywhere
-
-After the first successful login, the folder will contain:
+After the first successful login, your folder will contain everything needed:
 
 ```
+
 ADF_CLI.cmd
-Source\
+Source
 settings.json
-rclone.conf (token saved)
-```
+rclone.conf (Google token saved)
 
-That means:
+````
 
-✅ Google login will NOT be required again
-(as long as you keep the Source folder)
+<img width="600" height="448" alt="Portable Folder Ready" src="https://github.com/user-attachments/assets/10940d98-defa-4473-bcff-8ae4e6c666fa" />
 
 ---
 
-## 🚀 Use It on Another PC
+## 🚀 Using It on Another PC is Super Easy
 
-To run Auto Drive Fetch on a different machine:
+To use Auto Drive Fetch on any new machine:
 
-1. Copy the entire folder to a USB drive or external storage
-2. Paste it into any location on the new PC
+1. Copy the entire folder (with `Source\`) to a USB drive or any location  
+2. Paste it onto the new PC  
 3. Run:
 
 ```cmd
 ADF_CLI.cmd
-```
-
-On the new PC it will only ask:
-
-* Subfolder name (to separate backups per device)
-* Local folder to sync
-
-Then backup starts instantly.
+````
 
 ---
+
+## ✅ What Happens Next?
+
+On the new PC:
+
+* It will NOT ask for Google login again
+* It will only ask you to enter a **Child Folder Name** (subfolder)
+
+Example:
+
+```
+OfficePC
+LaptopBackup
+HomePC
+```
+
+Then Auto Drive Fetch will automatically complete setup and start syncing instantly.
+
+---
+
+✅ That’s it — Copy, Run, Type Folder Name, Done.
 
 # 🔐 First Run = Only Time Login is Needed
 
