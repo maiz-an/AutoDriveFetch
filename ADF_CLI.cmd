@@ -76,6 +76,9 @@ python -u "!PYTHON_SCRIPT!"
 set PY_EXIT=!errorlevel!
 echo %date% %time% - Python script exited with code !PY_EXIT! >> "%DEBUG_LOG%"
 
+:: Release lock on original folder by changing to temp directory
+cd /d "%temp%"
+
 :: Handle Python errors with visible pause
 if !PY_EXIT! neq 0 (
     echo.
