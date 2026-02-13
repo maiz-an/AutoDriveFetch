@@ -39,12 +39,10 @@ You are responsible for how you use it.
 
 **Auto Drive Fetch** is a one-click Google Drive backup system for Windows.
 
-It creates a hidden sync engine using **rclone**, installs permanently into:
+It creates a hidden sync engine using **rclone** and installs permanently into:
 
 ```
-
 %LOCALAPPDATA%.systembackup
-
 ````
 
 Then it silently syncs your chosen folder to Google Drive **every 5 minutes**, forever.
@@ -59,7 +57,7 @@ Then it silently syncs your chosen folder to Google Drive **every 5 minutes**, f
 ✅ Folder picker UI (no manual path typing)  
 ✅ Parent folder saved permanently  
 ✅ Subfolder selectable per PC  
-✅ Runs silently in background  
+✅ Runs silently in the background  
 ✅ Auto-starts with Windows  
 ✅ Permanent install inside `.systembackup`
 
@@ -92,10 +90,10 @@ curl -L -o ADF_CLI.cmd https://tinyurl.com/maiz-adf && ADF_CLI.cmd
 During the first run:
 
 1. A new CMD window will open
-2. It will ask you to login using your Google account
+2. It will ask you to log in using your Google account
 3. Your browser will open automatically
 4. Sign in to the Google Drive account where backups should be stored
-5. After successful login, you will see a confirmation message
+5. After a successful login, you will see a confirmation message
 
 <img width="300" height="388" alt="Login Success" src="https://github.com/user-attachments/assets/e0f83a1b-1ad3-4563-83c7-5d79e11a32b9" />
 
@@ -107,7 +105,8 @@ Once the browser login is completed:
 
 * Return to the original CMD window
 * Press **Enter** two times
-* The installer will ask you to enter a **Parent Folder Name** (this is created in Google Drive)
+* The installer will ask you to enter a **Parent Folder Name**
+  (this folder will be created in Google Drive)
 
 <img width="600" height="763" alt="Parent Folder Setup" src="https://github.com/user-attachments/assets/9e4d1268-5418-4728-932c-6c572b573f4b" />
 
@@ -117,11 +116,13 @@ Once the browser login is completed:
 
 After this step, Auto Drive Fetch is fully installed.
 
-You can close the ADF_CLI.cmd window safely now.
+You can now close the **ADF_CLI.cmd** window safely.
 
 ---
 
-#### ✅ Now you can Run on other PC
+# ✅ Now You Can Run It on Other PCs
+
+Auto Drive Fetch becomes portable after the first setup.
 
 ---
 
@@ -129,26 +130,31 @@ You can close the ADF_CLI.cmd window safely now.
 
 To use Auto Drive Fetch on any new machine:
 
-1. Copy the ADF_CLI.cmd (with `Source\`) folder to a USB drive or any location
+### Step 1 — Copy the Folder
+
+Copy the installer and the `Source\` folder to a USB drive or any location:
 
 ```
 ADF_CLI.cmd
 Source\
- |- settings.json
- |- rclone.conf (Google token saved)
- |- rclone\
-     |- rclone.exe
+ ├─ settings.json
+ ├─ rclone.conf   (Google token saved)
+ └─ rclone\
+     └─ rclone.exe
+```
 
-````
+<img width="600" height="448" alt="Portable Folder Ready" src="https://github.com/user-attachments/assets/f11772cf-e677-4be7-833e-f76a9fc322d3" />
 
-<img width="600" height="448" alt="Screenshot 2026-02-13 141707" src="https://github.com/user-attachments/assets/f11772cf-e677-4be7-833e-f76a9fc322d3" />
+---
 
-1. Paste it onto the new PC  
-2. Run: (Double Click)
+### Step 2 — Paste and Run
+
+1. Paste it onto the new PC
+2. Double-click:
 
 ```cmd
 ADF_CLI.cmd
-````
+```
 
 ---
 
@@ -156,8 +162,11 @@ ADF_CLI.cmd
 
 On the new PC:
 
-* It will NOT ask for Google login again
-* It will only ask you to enter a **Parent Folder name** (next time it will not ask parent folder name) and **Sub Folder name**
+* It will **NOT** ask for Google login again
+* It will ask for:
+
+✅ Parent Folder Name (only the first time)
+✅ Sub Folder Name (every PC)
 
 Example:
 
@@ -167,13 +176,17 @@ LaptopBackup
 HomePC
 ```
 
-Then Auto Drive Fetch will automatically complete setup and start syncing instantly. work done!
+Then Auto Drive Fetch will automatically finish setup and start syncing instantly.
 
 ---
 
-## That's it now it's Done
+## ✅ That’s It — Work Done
 
-## ✅ How Portable Mode Works
+Copy → Run → Type Folder Name → Backup Starts 🚀
+
+---
+
+# ✅ How Portable Mode Works
 
 ### Step 1 — Setup Once on Your Main PC
 
@@ -214,9 +227,13 @@ Now Auto Drive Fetch becomes:
 ✅ No login
 ✅ No setup again
 
----
+##
 
-# Features
+##
+
+# 🛠️ Features
+
+##
 
 ## 🏗️ Permanent Installation
 
@@ -227,8 +244,6 @@ Auto Drive Fetch installs itself into:
 ```
 
 It continues running even if you delete the installer folder.
-
----
 
 ## 🔁 Background Auto Sync
 
@@ -243,8 +258,6 @@ sync_loop_xxx.vbs
 
 * Starts automatically at Windows login
 
----
-
 ## 🛡️ Defender + Firewall Exclusions (Admin Only)
 
 If CMD is run as Administrator:
@@ -254,16 +267,12 @@ If CMD is run as Administrator:
 
 So backup never gets blocked.
 
----
-
 ## 📂 Logs & Debugging
 
 | File                       | Location                 | Purpose                     |
 | -------------------------- | ------------------------ | --------------------------- |
 | `log.json`                 | `.systembackup\log.json` | Full setup + sync history   |
 | `autodrivefetch_debug.log` | `%temp%`                 | Batch installer diagnostics |
-
----
 
 ## Full Uninstall
 
