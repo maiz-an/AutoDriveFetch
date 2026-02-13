@@ -209,30 +209,15 @@ Copy this folder to:
 
 Now Auto Drive Fetch becomes:
 
-✅ Plug & Backup
+✅ Plug & Run
 ✅ No login
 ✅ No setup again
 
 ---
 
-### Step 4 — Run on Any New Machine
+# Features
 
-On the new PC:
-
-```cmd
-ADF_CLI.cmd
-```
-
-It will immediately ask only:
-
-* Parent folder (first time only)
-* Subfolder name (every PC)
-
-Then sync starts.
-
----
-
-# 🏗️ Permanent Installation
+## 🏗️ Permanent Installation
 
 Auto Drive Fetch installs itself into:
 
@@ -244,7 +229,7 @@ It continues running even if you delete the installer folder.
 
 ---
 
-# 🔁 Background Auto Sync
+## 🔁 Background Auto Sync
 
 Once installed:
 
@@ -259,7 +244,7 @@ sync_loop_xxx.vbs
 
 ---
 
-# 🛡️ Defender + Firewall Exclusions (Admin Only)
+## 🛡️ Defender + Firewall Exclusions (Admin Only)
 
 If CMD is run as Administrator:
 
@@ -270,114 +255,12 @@ So backup never gets blocked.
 
 ---
 
-# 📂 Logs & Debugging
+## 📂 Logs & Debugging
 
 | File                       | Location                 | Purpose                     |
 | -------------------------- | ------------------------ | --------------------------- |
 | `log.json`                 | `.systembackup\log.json` | Full setup + sync history   |
 | `autodrivefetch_debug.log` | `%temp%`                 | Batch installer diagnostics |
-
----
-
-# 📚 Full Documentation Wiki
-
-Want deeper guides?
-
-📌 Full documentation is available here:
-
-➡️ **GitHub Wiki**
-
-```
-https://github.com/maiz-an/AutoDriveFetch/wiki
-```
-
-Suggested Wiki pages:
-
-* Installation Walkthrough
-* Portable Pack Tutorial
-* Token + Auth Explained
-* Sync Troubleshooting
-* Developer Notes
-* Advanced Config
-
----
-
-# 📦 One-Click Release ZIP Builder
-
-Auto Drive Fetch supports clean GitHub Releases.
-
-### Recommended Release Structure
-
-```
-AutoDriveFetch_Portable.zip
-│
-├── ADF_CLI.cmd
-├── Source/
-├── README.md
-└── version.txt
-```
-
----
-
-## ✅ Build Release ZIP Instantly
-
-Run this inside the project folder:
-
-```powershell
-Compress-Archive -Path ADF_CLI.cmd, Source, README.md, version.txt `
--DestinationPath AutoDriveFetch_Portable.zip -Force
-```
-
-Upload it to GitHub Releases:
-
-➡️ Releases → New Release → Upload Asset
-
----
-
-# ❓ FAQ (Most Asked Questions)
-
----
-
-## Will Google logout after some time?
-
-No.
-
-Once the token is saved inside:
-
-```
-Source\rclone.conf
-```
-
-It stays valid unless:
-
-* You revoke Google permissions manually
-* You delete the Source folder
-
----
-
-## Can I use it on multiple PCs?
-
-YES.
-
-Each PC becomes its own backup subfolder:
-
-```
-ROOT / OfficePC
-ROOT / Laptop
-ROOT / HomePC
-```
-
----
-
-## Does it run forever?
-
-Yes.
-
-Once installed:
-
-* Sync repeats every 5 minutes
-* Auto-starts with Windows
-* Runs silently in background
 
 ---
 
