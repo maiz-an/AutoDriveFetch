@@ -167,7 +167,7 @@ On the new PC:
 * It will **NOT** ask for Google login again
 * It will ask for:
 
-✅ Parent Folder Name (only the first time)
+✅ Parent Folder Name 
 ✅ Sub Folder Name (every PC)
 
 Example:
