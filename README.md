@@ -143,7 +143,6 @@ Source\
 
 <img width="600" height="448" alt="Screenshot 2026-02-13 141707" src="https://github.com/user-attachments/assets/f11772cf-e677-4be7-833e-f76a9fc322d3" />
 
-
 1. Paste it onto the new PC  
 2. Run: (Double Click)
 
@@ -168,9 +167,11 @@ LaptopBackup
 HomePC
 ```
 
-Then Auto Drive Fetch will automatically complete setup and start syncing instantly.
+Then Auto Drive Fetch will automatically complete setup and start syncing instantly. work done!
 
 ---
+
+## That's it now it's Done
 
 ## ✅ How Portable Mode Works
 
