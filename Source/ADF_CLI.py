@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -80,7 +80,7 @@ def c(text, color=None, bold=False):
 def strip_ansi(text):
     return re.sub(r'\033\[[0-9;]*m', '', text)
 
-WATERMARK = "    ⚡Powered by Maiz"
+WATERMARK = "   ⚡Powered by Maiz"
 WIDTH = 80
 
 def center_text(text, width=WIDTH):
@@ -707,7 +707,6 @@ $shortcut.Save()
         add_defender_firewall_exclusions(new_sync_script, new_vbs_script)
 
         print_success("System installation complete!")
-        print_info(" You may now delete the original BackUpSetub folder.")
         return True
 
     except Exception as e:
@@ -879,31 +878,31 @@ Loop
 
     # ---------- FINAL SUMMARY ----------
     print_separator()
-    print_header("         ✅ SETUP COMPLETE         ")
+    print_header("         SETUP COMPLETE✅         ")
     print(f"   {c('📁', 'cyan')}  Local folder:  {c(local_path, 'white', bold=True)}")
     print(f"   {c('☁️', 'cyan')}   Drive folder:  {c(remote_path, 'white', bold=True)}")
     print("\n   " + c("⏱️  Automatic sync:", 'yellow', bold=True))
     print("      • Runs every 5 minutes (hidden)")
     print("      • Starts automatically when you log in")
     print("\n   " + c("📌 VERIFICATION:", 'yellow', bold=True))
-    print(f"      • Startup folder:  {c('%APPDATA%\\...\\Startup', 'cyan')}")
-    print(f"      • Shortcut:        {c(SHORTCUT_NAME.format(local_name), 'cyan')}")
-    print(f"      • Process:         {c('wscript.exe', 'cyan')} in Task Manager")
-    print(f"      • Log file (source): {c(LOG_FILE, 'cyan')} (original)")
+    print(f"      • Startup folder:     {c('%APPDATA%\\...\\Startup', 'cyan')}")
+    print(f"      • Shortcut:           {c(SHORTCUT_NAME.format(local_name), 'cyan')}")
+    print(f"      • Process:            {c('wscript.exe', 'cyan')} in Task Manager")
+    print(f"      • Log file (source):  {c(LOG_FILE, 'cyan')} (original)")
     print(f"      • Log file (system):  {c(INSTALL_DIR / 'log.json', 'cyan')} (backup)")
     print("\n   " + c("📌 PERMANENT LOCATION:", 'yellow', bold=True))
-    print(f"      • System folder:   {c(INSTALL_DIR, 'cyan')}")
-    print(f"      • Status:          {c('Running from system location', 'green', bold=True)}")
-    print(f"      • Settings:        {c(INSTALL_DIR / 'settings.json', 'cyan')} (auto‑saved)")
+    print(f"      • System folder:      {c(INSTALL_DIR, 'cyan')}")
+    print(f"      • Status:             {c('Running from system location', 'green', bold=True)}")
+    print(f"      • Settings:           {c(INSTALL_DIR / 'settings.json', 'cyan')} (auto saved)")
     print("\n   " + c("🛡️  EXCLUSIONS:", 'yellow', bold=True))
-    print(f"      • Windows Defender: {c('Folder + rclone.exe + .bat + .vbs excluded', 'green')}")
-    print(f"      • Firewall:        {c('Outbound rule added for rclone.exe', 'green')}")
+    print(f"      • Win Defender:       {c('Folder + rclone.exe + .bat + .vbs excluded', 'green')}")
+    print(f"      • Firewall:           {c('Outbound rule added for rclone.exe', 'green')}")
     print("\n   " + c("🗑️  CLEANUP:", 'yellow', bold=True))
     print(f"      • You may now delete the entire folder: {c(ROOT_DIR, 'cyan')}")
-    print(f"      • Backup will continue from {c(INSTALL_DIR, 'cyan')}")
+    print(f"      • Fetch will continue from {c(INSTALL_DIR, 'cyan')}")
     print("\n   " + c("📦 PORTABLE – USE ON ANY PC (zero login):", 'yellow', bold=True))
-    print("      1. Copy the entire BackUpSetub folder to USB or network share")
-    print("      2. On another PC, run SETUP.bat from the root")
+    print("      1. Copy the AFD_CLI.cmd and Source folder to USB or network share")
+    print("      2. On another PC, run AFD_CLI.cmd")
     print("      3. No authentication needed – config is already saved!")
     print("\n   " + c("🛑 TO STOP SYNC:", 'yellow', bold=True))
     print("      • Delete the shortcut from Startup folder")
