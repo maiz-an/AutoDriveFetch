@@ -117,24 +117,11 @@ Once the browser login is completed:
 
 After this step, Auto Drive Fetch is fully installed.
 
-You can close the ADF_CLI.cmdwindow safely.
+You can close the ADF_CLI.cmd window safely now.
 
 ---
 
-## ✅ Just Copy → Paste → Run
-
-After the first successful login, your folder will contain everything needed:
-
-```
-
-ADF_CLI.cmd
-Source
-settings.json
-rclone.conf (Google token saved)
-
-````
-
-<img width="600" height="448" alt="Portable Folder Ready" src="https://github.com/user-attachments/assets/10940d98-defa-4473-bcff-8ae4e6c666fa" />
+#### ✅ Now you can Run on other PC
 
 ---
 
@@ -142,9 +129,20 @@ rclone.conf (Google token saved)
 
 To use Auto Drive Fetch on any new machine:
 
-1. Copy the entire folder (with `Source\`) to a USB drive or any location  
-2. Paste it onto the new PC  
-3. Run:
+1. Copy the ADF_CLI.cmd (with `Source\`) folder to a USB drive or any location
+
+```
+ADF_CLI.cmd
+Source\
+ |- settings.json
+ |- rclone.conf (Google token saved)
+ |- rclone\
+     |- rclone.exe
+
+````
+
+1. Paste it onto the new PC  
+2. Run: (Double Click)
 
 ```cmd
 ADF_CLI.cmd
