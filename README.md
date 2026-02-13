@@ -2,7 +2,7 @@
 
 # ⚡ Auto Drive Fetch  
 
-### Google Drive Auto Backup • Portable • Permanent • Silent
+### Drive Auto Fetch • Portable • Permanent • Silent
 
 <img src="https://img.shields.io/github/v/release/maiz-an/AutoDriveFetch?label=release&style=flat-square">
 <img src="https://img.shields.io/github/downloads/maiz-an/AutoDriveFetch/total?style=flat-square">
@@ -177,16 +177,16 @@ OfficePC
 LaptopBackup
 HomePC
 ```
+
 <img width="600" height="633" alt="Screenshot 2026-02-13 141815" src="https://github.com/user-attachments/assets/e9b13b59-844e-408d-93ed-142feaed1920" />
 
 * It will ask to pick a folder (Select the folder you want to backup)
 
 <img width="600" height="633" alt="Screenshot 2026-02-13 141851" src="https://github.com/user-attachments/assets/786c5fa3-2551-47e2-8e72-dcc8f8170c21" />
 
-* Wait untill its show the success message 
+* Wait untill its show the success message
 
 <img width="600" height="1021" alt="Screenshot 2026-02-13 142131" src="https://github.com/user-attachments/assets/765e39e1-81f8-4f7a-a61c-3009504c26c6" />
-
 
 Then Auto Drive Fetch will automatically finish setup and start syncing instantly.
 
