@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.7"
+__version__ = "2.0.8"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -413,6 +413,25 @@ def is_config_valid():
     )
     return test.returncode == 0
 
+def copy_source_config_if_valid():
+    """Check if rclone.conf exists in Source folder and is valid; if yes, copy to system."""
+    source_config = SCRIPT_DIR / "rclone.conf"
+    if not source_config.exists():
+        return False
+    try:
+        # Quick test using the source config
+        result = subprocess.run(
+            [str(RCLONE_EXE), "--config", str(source_config), "listremotes"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0 and "gdrive:" in result.stdout:
+            shutil.copy2(str(source_config), str(RCLONE_CONFIG))
+            print_info("Copied existing rclone.conf from Source folder to system.")
+            return True
+    except:
+        pass
+    return False
+
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin() != 0
@@ -723,8 +742,15 @@ def main():
         sys.exit(1)
     print_success("rclone ready")
 
+    # ---------- CONFIG SETUP: check system, then source ----------
     print_step(2, "Google Drive authentication")
-    if not is_config_valid():
+    config_ok = is_config_valid()
+    if not config_ok:
+        # Try to use source config if available
+        if copy_source_config_if_valid():
+            config_ok = is_config_valid()
+    
+    if not config_ok:
         if not auto_authentication():
             print_warning("Automatic authentication failed. Switching to manual method...")
             if not manual_authentication():
