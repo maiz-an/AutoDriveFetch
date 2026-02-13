@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.1-blue.svg" alt="Version 2.0.4">
+  <img src="https://img.shields.io/badge/version-2.0.4-blue.svg" alt="Version 2.0.4">
   <img src="https://img.shields.io/badge/platform-Windows-lightgrey.svg" alt="Windows">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
 </p>
