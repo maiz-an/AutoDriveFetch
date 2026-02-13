@@ -78,7 +78,9 @@ curl -L -o ADF_CLI.cmd https://tinyurl.com/maiz-adf && ADF_CLI.cmd
 ## What This Command Does Automatically
 
 ✔ Installs Python (if missing)
+
 ✔ Downloads all required backup files
+
 ✔ Starts the guided Google Drive authentication setup
 
 <img width="600" height="656" alt="Setup Window" src="https://github.com/user-attachments/assets/ff8abf5e-db09-447a-baee-8adfdab8f2cc" />
