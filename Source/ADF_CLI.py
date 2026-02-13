@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.8"
+__version__ = "2.0.9"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -283,7 +283,6 @@ def download_rclone_zip():
         return True
 
     print_step("dl", "Rclone.zip not found – attempting download")
-    print_info(" Source: Google Drive (your shared link)")
     
     file_id = "16QfRsPGhQKBJPg1p2ovdhv1R2IhOvp7R"
     gdrive_url = f"https://drive.usercontent.google.com/download?id={file_id}&confirm=t"
