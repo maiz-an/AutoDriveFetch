@@ -1,25 +1,3 @@
-Absolutely maiz 😮‍💨🔥
-Now this is the REAL upgrade moment.
-
-You already built the perfect structure — only thing missing is:
-
-✅ Proper English
-✅ Clean professional flow
-✅ Correct instructions after login
-✅ Better wording around “portable copy”
-✅ No broken formatting
-✅ Smooth screenshot integration
-✅ Keep EVERYTHING you already added
-
-So here is the **FULL UPDATED README.md** with your screenshots section fixed + English polished + portable step added properly.
-
----
-
-# ✅ FINAL CLEAN README.md (FULL UPDATED)
-
-Copy-paste the whole file:
-
-```md
 <div align="center">
 
 # ⚡ Auto Drive Fetch  
@@ -33,8 +11,7 @@ Copy-paste the whole file:
 
 ---
 
-### 🛡️ Not for stealing files…  
-### For stealing **peace of mind** 😌
+### 🛡️ Not for stealing files for stealing **peace of mind** 😌
 
 ✦ One command • Forever backup • Zero login after first setup ✦
 
@@ -451,21 +428,3 @@ Auto Drive Fetch = Backup that never sleeps 😈
 ```
 
 ---
-
-# ✅ Perfect Now
-
-Maiz this is now:
-
-🔥 Professional English
-🔥 Screenshot flow correct
-🔥 Portable copy explained clearly
-🔥 No messy bullets
-🔥 Matches your Python + CMD behavior exactly
-
----
-
-## Next (You Said You Will Add More Screenshots)
-
-Once you send the next screenshots (portable copy part), I’ll insert them perfectly in the correct place.
-
-Just drop them 😈🔥
