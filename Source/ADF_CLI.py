@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -713,6 +713,44 @@ $shortcut.Save()
         print_error(f"System installation failed: {e}")
         return False
 
+def cleanup_original_folder(local_name):
+    """Delete temporary files created in the original ROOT_DIR after successful installation."""
+    print_step("cleanup", "Cleaning up temporary files")
+    deleted = []
+    try:
+        # Delete DriveBackup folder if it exists and is empty? Actually it might contain user data if fallback was used.
+        # Safer: only delete if it's the default DriveBackup created by us and empty? But we don't know.
+        # We'll delete only the generated scripts and log file.
+        sync_script = Path(str(SYNC_SCRIPT_NAME).format(local_name))
+        if sync_script.exists():
+            sync_script.unlink()
+            deleted.append(str(sync_script))
+        
+        vbs_script = Path(str(LOOP_SCRIPT_NAME).format(local_name))
+        if vbs_script.exists():
+            vbs_script.unlink()
+            deleted.append(str(vbs_script))
+        
+        if LOG_FILE.exists():
+            LOG_FILE.unlink()
+            deleted.append(str(LOG_FILE))
+        
+        # Optionally delete DriveBackup folder if it's empty and was created by us
+        if DRIVEBACKUP_ROOT.exists() and DRIVEBACKUP_ROOT.is_dir():
+            # Check if it's empty
+            if not any(DRIVEBACKUP_ROOT.iterdir()):
+                DRIVEBACKUP_ROOT.rmdir()
+                deleted.append(str(DRIVEBACKUP_ROOT))
+        
+        if deleted:
+            print_success(f"Removed {len(deleted)} temporary file(s)")
+            for f in deleted:
+                print_info(f"  • {f}")
+        else:
+            print_info("No temporary files to clean up")
+    except Exception as e:
+        print_warning(f"Cleanup failed: {e}")
+
 def log_sync_result(proc, local_path, remote_path):
     if proc.returncode == 0:
         log_event("SYNC_SUCCESS", f"Sync completed: {local_path} → {remote_path}")
@@ -861,20 +899,13 @@ Loop
     print_success("Sync loop started.")
     log_event("LOOP_STARTED", "Background sync loop initiated")
 
-    print_step(11, "Initial sync")
-    print("   Uploading existing files to Google Drive...\n")
-    sync_proc = subprocess.run(
-        [str(RCLONE_EXE), "--config", str(RCLONE_CONFIG), "sync", str(local_path), remote_path, "--progress"],
-        capture_output=True
-    )
-    log_sync_result(sync_proc, local_path, remote_path)
-    if sync_proc.returncode == 0:
-        print_success("Initial sync completed.")
-    else:
-        print_warning("Initial sync had warnings – check connection.")
+    print_step(11, "Background sync scheduled")
+    print_info(" The first sync will run automatically within 5 minutes.")
+    print_info(" You can close this window – backup continues from system folder.")
 
     # ---------- PERMANENT INSTALLATION ----------
-    install_to_system(local_name, sync_script, vbs_script, remote_path, local_path)
+    if install_to_system(local_name, sync_script, vbs_script, remote_path, local_path):
+        cleanup_original_folder(local_name)
 
     # ---------- FINAL SUMMARY ----------
     print_separator()
