@@ -24,22 +24,22 @@ if %errorlevel% neq 0 (
 set PYTHON_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
 set PYTHON_URL_32=https://www.python.org/ftp/python/3.12.9/python-3.12.9.exe
 set INSTALLER=%temp%\python-installer.exe
-set SYSTEM_DIR=%LOCALAPPDATA%\.systembackup
-set PYTHON_SCRIPT=%SYSTEM_DIR%\ADF_CLI.py
+set SOURCE_FOLDER=%~dp0Source
+set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
 set SCRIPT_DL_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/ADF_CLI.py
 set VERSION_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/version.txt
 set MAX_RETRIES=3
 
-:: ---------- CREATE SYSTEM FOLDER ----------
-if not exist "!SYSTEM_DIR!" (
-    echo Creating system folder...
-    mkdir "!SYSTEM_DIR!" >> "%DEBUG_LOG%" 2>&1
+:: ---------- CREATE SOURCE FOLDER ----------
+if not exist "!SOURCE_FOLDER!" (
+    echo Creating Source folder...
+    mkdir "!SOURCE_FOLDER!" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! neq 0 (
-        echo [ERROR] Could not create system folder >> "%DEBUG_LOG%"
+        echo [ERROR] Could not create Source folder >> "%DEBUG_LOG%"
         pause
         exit /b 1
     ) else (
-        echo System folder created. >> "%DEBUG_LOG%"
+        echo Source folder created. >> "%DEBUG_LOG%"
     )
 )
 
@@ -76,9 +76,6 @@ python -u "!PYTHON_SCRIPT!"
 set PY_EXIT=!errorlevel!
 echo %date% %time% - Python script exited with code !PY_EXIT! >> "%DEBUG_LOG%"
 
-:: Release lock on original folder by changing to temp directory
-cd /d "%temp%"
-
 :: Handle Python errors with visible pause
 if !PY_EXIT! neq 0 (
     echo.
@@ -92,7 +89,7 @@ if !PY_EXIT! neq 0 (
 :: ------------------------------------------------------------------
 echo.
 echo ============================================================
-echo          ADF_CLI SETUP COMPLETED
+echo          SETUP PROCESS COMPLETED
 echo ============================================================
 echo    Debug log: %DEBUG_LOG%
 echo    Check it if something went wrong.
@@ -210,7 +207,7 @@ echo Checking for updates... >> "%DEBUG_LOG%"
 
 :: Get local version
 set LOCAL_VERSION=
-for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%SYSTEM_DIR%'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
+for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%~dp0Source'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
 if "!LOCAL_VERSION!"=="" (
     echo [WARNING] Could not determine local version. >> "%DEBUG_LOG%"
     set "LOCAL_VERSION=0.0.0"
@@ -268,7 +265,7 @@ if !errorlevel! neq 0 (
 :: --- VERIFY THE UPDATE ---
 echo Verifying updated script... >> "%DEBUG_LOG%"
 timeout /t 1 /nobreak >nul
-for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%SYSTEM_DIR%'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set NEW_VERSION=%%i
+for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%~dp0Source'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set NEW_VERSION=%%i
 if "!NEW_VERSION!"=="!REMOTE_VERSION!" (
     echo Verified: script is now version !NEW_VERSION!. >> "%DEBUG_LOG%"
 ) else (
