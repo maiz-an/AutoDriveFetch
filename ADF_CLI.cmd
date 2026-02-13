@@ -97,9 +97,7 @@ echo ============================================================
 echo    Debug log: %DEBUG_LOG%
 echo    Check it if something went wrong.
 echo ============================================================
-
-:: Small delay to allow Windows to release any folder handles
-timeout /t 2 >nul
+pause
 exit /b 0
 
 :: ------------------------------------------------------------------
