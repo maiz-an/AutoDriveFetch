@@ -5,7 +5,6 @@
 ### Drive Auto Fetch • Portable • Permanent • Silent
 
 <img src="https://img.shields.io/github/v/release/maiz-an/AutoDriveFetch?label=release&style=flat-square">
-<img src="https://img.shields.io/github/downloads/maiz-an/AutoDriveFetch/total?style=flat-square">
 <img src="https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square">
 <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square">
 
