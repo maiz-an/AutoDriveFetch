@@ -24,7 +24,7 @@ import re
 import tempfile
 from pathlib import Path
 
-__version__ = "2.0.9"
+__version__ = "2.0.10"
 
 # ---------- PATH CONFIGURATION ----------
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -649,6 +649,7 @@ try {{
 def install_to_system(local_name, remote_path, local_path):
     r"""
     Create all necessary files in %LOCALAPPDATA%\.systembackup and set up startup shortcut.
+    Also create log_sync.py helper for logging sync results.
     Returns True if successful, False otherwise.
     """
     print_step(7, "Installing to permanent system location")
@@ -663,12 +664,50 @@ def install_to_system(local_name, remote_path, local_path):
             print_error("rclone or config missing in system folder.")
             return False
 
+        # Create log_sync.py helper
+        log_sync_script = INSTALL_DIR / "log_sync.py"
+        log_sync_script.write_text('''import sys, json, datetime
+from pathlib import Path
+
+if len(sys.argv) != 4:
+    sys.exit(1)
+
+exit_code = sys.argv[1]
+local_path = sys.argv[2]
+remote_path = sys.argv[3]
+
+log_file = Path(__file__).parent / "log.json"
+
+entry = {
+    "timestamp": datetime.datetime.now().isoformat(),
+    "event": "SYNC",
+    "message": f"Sync {'successful' if exit_code == '0' else 'failed'}",
+    "details": {
+        "exitcode": exit_code,
+        "local": local_path,
+        "remote": remote_path
+    }
+}
+
+if log_file.exists():
+    with open(log_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+else:
+    data = []
+data.append(entry)
+with open(log_file, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+''', encoding='utf-8')
+        print_success("Created log_sync.py helper.")
+
         # Create sync script directly in system folder
         new_sync_script = INSTALL_DIR / f"sync_{local_name}.bat"
         new_sync_script.write_text(f'''@echo off
 cd /d "{INSTALL_DIR}"
 "{RCLONE_EXE}" --config "{RCLONE_CONFIG}" sync "{local_path}" "{remote_path}" --progress
-if %errorlevel% equ 0 (
+set EXITCODE=%errorlevel%
+python log_sync.py %EXITCODE% "{local_path}" "{remote_path}"
+if %EXITCODE% equ 0 (
     echo ✅ Sync successful at %date% %time%
 ) else (
     echo ❌ Sync failed!
