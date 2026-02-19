@@ -3,7 +3,20 @@ setlocal enabledelayedexpansion
 
 :: ---------- DEBUG LOG ----------
 set "DEBUG_LOG=%temp%\autodrivefetch_debug.log"
-echo %date% %time% - Session started > "%DEBUG_LOG%"
+echo %date% %time% - Session started >> "%DEBUG_LOG%"
+echo Script path: %~f0 >> "%DEBUG_LOG%"
+echo Current directory: %cd% >> "%DEBUG_LOG%"
+
+:: If we are the elevated instance, show a pause so the window stays open
+if "%1"=="elevated" (
+    echo.
+    echo ====================================================
+    echo Running with Administrator privileges...
+    echo This window will pause at the beginning for debugging.
+    echo ====================================================
+    echo.
+    timeout /t 3 >nul
+)
 
 :: Change to the directory of the batch file for portability
 cd /d "%~dp0" || (
@@ -16,7 +29,8 @@ cd /d "%~dp0" || (
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo Requesting Administrator Access...
-    powershell -Command "Start-Process '%~f0' -Verb RunAs -WorkingDirectory '%~dp0'"
+    :: Pass "elevated" argument so the new window knows it's elevated
+    powershell -Command "Start-Process '%~f0' -ArgumentList 'elevated' -Verb RunAs -WorkingDirectory '%~dp0'"
     exit /b
 )
 
