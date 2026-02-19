@@ -21,7 +21,8 @@ if %errorlevel% neq 0 (
 )
 
 :: ---------- CONFIGURATION ----------
-set PYTHON_DRIVE_ID=1pCwjxLDxxtf6LQ9FYXzbMppSUUQEQth5
+:: Official Python 3.14.3 download URL
+set PYTHON_URL=https://www.python.org/ftp/python/3.14.3/python-3.14.3-amd64.exe
 set INSTALLER=%temp%\python-installer.exe
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
@@ -107,42 +108,55 @@ if %errorlevel% equ 0 (
 )
 
 :: Check per-user Python (64-bit)
-set "PYTHON_PER_USER=%USERPROFILE%\AppData\Local\Programs\Python\Python312\python.exe"
+set "PYTHON_PER_USER=%USERPROFILE%\AppData\Local\Programs\Python\Python314\python.exe"
 if exist "!PYTHON_PER_USER!" (
     echo Found Python in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;!PATH!"
+    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314;!PATH!"
     python --version >nul 2>&1
     if !errorlevel! equ 0 exit /b 0
 )
 
 :: Check per-user Python (32-bit fallback)
-set "PYTHON_PER_USER_32=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\python.exe"
+set "PYTHON_PER_USER_32=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\python.exe"
 if exist "!PYTHON_PER_USER_32!" (
     echo Found Python 32-bit in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;!PATH!"
+    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314-32;!PATH!"
     python --version >nul 2>&1
     if !errorlevel! equ 0 exit /b 0
 )
 
-:: Download and install Python from Google Drive
-echo Downloading Python installer...
+:: Download and install Python from official python.org
+echo Downloading Python 3.14.3 installer from python.org...
 set DOWNLOAD_OK=0
 for /l %%i in (1,1,%MAX_RETRIES%) do (
     echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
     
-    :: Properly encoded download with user-agent for Google Drive (fixed URL)
-    powershell -Command "$wc = New-Object System.Net.WebClient; $wc.Headers.Add('user-agent', 'Mozilla/5.0'); $wc.DownloadFile('https://drive.usercontent.google.com/download?id=%PYTHON_DRIVE_ID%&confirm=t', '%INSTALLER%')" >> "%DEBUG_LOG%" 2>&1
+    :: Download using PowerShell (most reliable)
+    powershell -Command "try { Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%INSTALLER%' -UseBasicParsing } catch { exit 1 }" >> "%DEBUG_LOG%" 2>&1
     
     if !errorlevel! equ 0 (
         if exist "%INSTALLER%" (
             for %%A in ("%INSTALLER%") do set SIZE=%%~zA
             if !SIZE! gtr 1000000 (
                 set DOWNLOAD_OK=1
-                echo Download successful from Google Drive. >> "%DEBUG_LOG%"
+                echo Download successful from python.org. >> "%DEBUG_LOG%"
                 goto :INSTALL_PYTHON
             ) else (
                 echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
                 del "%INSTALLER%" 2>nul
+            )
+        )
+    ) else (
+        echo PowerShell download failed, trying curl... >> "%DEBUG_LOG%"
+        curl -L -o "%INSTALLER%" "%PYTHON_URL%" >> "%DEBUG_LOG%" 2>&1
+        if !errorlevel! equ 0 (
+            if exist "%INSTALLER%" (
+                for %%A in ("%INSTALLER%") do set SIZE=%%~zA
+                if !SIZE! gtr 1000000 (
+                    set DOWNLOAD_OK=1
+                    echo Download successful via curl. >> "%DEBUG_LOG%"
+                    goto :INSTALL_PYTHON
+                )
             )
         )
     )
@@ -152,14 +166,14 @@ for /l %%i in (1,1,%MAX_RETRIES%) do (
 
 if !DOWNLOAD_OK! equ 0 (
     echo [ERROR] Python download failed after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
-    echo Please download Python 3.12.9 manually from:
-    echo https://drive.google.com/file/d/%PYTHON_DRIVE_ID%/view
+    echo Please download Python 3.14.3 manually from:
+    echo %PYTHON_URL%
     pause
     exit /b 1
 )
 
 :INSTALL_PYTHON
-echo Installing Python 3.12.9 for current user...
+echo Installing Python 3.14.3 for current user...
 start /wait "" "%INSTALLER%" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
 if %errorlevel% neq 0 (
     echo [ERROR] Python installation failed with code %errorlevel%. >> "%DEBUG_LOG%"
@@ -170,8 +184,8 @@ if %errorlevel% neq 0 (
 del "%INSTALLER%" >nul 2>&1
 
 :: Refresh PATH and verify installation
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;%PATH%"
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;%PATH%"
+set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314;%PATH%"
+set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314-32;%PATH%"
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python installed but not recognized in PATH. >> "%DEBUG_LOG%"
