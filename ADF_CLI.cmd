@@ -21,8 +21,8 @@ if %errorlevel% neq 0 (
 )
 
 :: ---------- CONFIGURATION ----------
-:: Official Python 3.14.3 download URL
-set PYTHON_URL=https://www.python.org/ftp/python/3.14.3/python-3.14.3-amd64.exe
+:: Use stable Python 3.12.9 (definitely exists)
+set PYTHON_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
 set INSTALLER=%temp%\python-installer.exe
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
@@ -44,7 +44,7 @@ if not exist "!SOURCE_FOLDER!" (
 )
 
 :: ------------------------------------------------------------------
-:: 1. CHECK / INSTALL PYTHON
+:: 1. CHECK / INSTALL PYTHON (robust version)
 :: ------------------------------------------------------------------
 call :CHECK_PYTHON
 if %errorlevel% neq 0 (
@@ -101,37 +101,51 @@ exit /b 0
 :: ------------------------------------------------------------------
 
 :CHECK_PYTHON
-python --version >nul 2>&1
-if %errorlevel% equ 0 (
+:: First, try to get real Python version, ignoring Microsoft Store stub
+set PYTHON_OK=0
+for /f "delims=" %%a in ('python -V 2^>^&1') do set "PYVER=%%a"
+echo Python check returned: !PYVER! >> "%DEBUG_LOG%"
+
+:: If output contains "Python", it's real; if it contains "Microsoft Store" or is empty, it's fake/missing
+if not "!PYVER!"=="" (
+    echo !PYVER! | findstr /i "Python" >nul
+    if !errorlevel! equ 0 (
+        echo Real Python found. >> "%DEBUG_LOG%"
+        set PYTHON_OK=1
+    ) else (
+        echo Python output is not a real Python version (maybe Microsoft Store stub). >> "%DEBUG_LOG%"
+    )
+)
+
+if !PYTHON_OK! equ 1 (
     echo Python is already installed. >> "%DEBUG_LOG%"
     exit /b 0
 )
 
 :: Check per-user Python (64-bit)
-set "PYTHON_PER_USER=%USERPROFILE%\AppData\Local\Programs\Python\Python314\python.exe"
+set "PYTHON_PER_USER=%USERPROFILE%\AppData\Local\Programs\Python\Python312\python.exe"
 if exist "!PYTHON_PER_USER!" (
     echo Found Python in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314;!PATH!"
+    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;!PATH!"
     python --version >nul 2>&1
     if !errorlevel! equ 0 exit /b 0
 )
 
 :: Check per-user Python (32-bit fallback)
-set "PYTHON_PER_USER_32=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\python.exe"
+set "PYTHON_PER_USER_32=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\python.exe"
 if exist "!PYTHON_PER_USER_32!" (
     echo Found Python 32-bit in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314-32;!PATH!"
+    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;!PATH!"
     python --version >nul 2>&1
     if !errorlevel! equ 0 exit /b 0
 )
 
-:: Download and install Python from official python.org
-echo Downloading Python 3.14.3 installer from python.org...
+:: No real Python found – download and install
+echo No working Python found. Downloading Python 3.12.9 installer from python.org...
 set DOWNLOAD_OK=0
 for /l %%i in (1,1,%MAX_RETRIES%) do (
     echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
     
-    :: Download using PowerShell (most reliable)
     powershell -Command "try { Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%INSTALLER%' -UseBasicParsing } catch { exit 1 }" >> "%DEBUG_LOG%" 2>&1
     
     if !errorlevel! equ 0 (
@@ -139,7 +153,7 @@ for /l %%i in (1,1,%MAX_RETRIES%) do (
             for %%A in ("%INSTALLER%") do set SIZE=%%~zA
             if !SIZE! gtr 1000000 (
                 set DOWNLOAD_OK=1
-                echo Download successful from python.org. >> "%DEBUG_LOG%"
+                echo Download successful. >> "%DEBUG_LOG%"
                 goto :INSTALL_PYTHON
             ) else (
                 echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
@@ -166,14 +180,14 @@ for /l %%i in (1,1,%MAX_RETRIES%) do (
 
 if !DOWNLOAD_OK! equ 0 (
     echo [ERROR] Python download failed after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
-    echo Please download Python 3.14.3 manually from:
+    echo Please download Python 3.12.9 manually from:
     echo %PYTHON_URL%
     pause
     exit /b 1
 )
 
 :INSTALL_PYTHON
-echo Installing Python 3.14.3 for current user...
+echo Installing Python 3.12.9 for current user...
 start /wait "" "%INSTALLER%" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
 if %errorlevel% neq 0 (
     echo [ERROR] Python installation failed with code %errorlevel%. >> "%DEBUG_LOG%"
@@ -183,9 +197,11 @@ if %errorlevel% neq 0 (
 )
 del "%INSTALLER%" >nul 2>&1
 
-:: Refresh PATH and verify installation
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314;%PATH%"
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python314-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python314-32;%PATH%"
+:: Refresh PATH
+set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;%PATH%"
+set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;%PATH%"
+
+:: Verify installation
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python installed but not recognized in PATH. >> "%DEBUG_LOG%"
