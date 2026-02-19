@@ -37,7 +37,7 @@ if %errorlevel% neq 0 (
 )
 
 :: ---------- CONFIGURATION ----------
-set "PORTABLE_ZIP_URL=https://github.com/maiz-an/AutoDriveFetch/raw/main/PortablePython.zip"
+set "PORTABLE_ZIP_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-embed-amd64.zip"
 set "PORTABLE_ZIP=%temp%\PortablePython.zip"
 set "PORTABLE_DIR=%~dp0PortablePython"
 set "PORTABLE_PYTHON=%PORTABLE_DIR%\python.exe"
