@@ -64,7 +64,7 @@ if not exist "!PORTABLE_PYTHON!" (
                 )
             )
         ) else (
-            echo Download failed, trying curl... >> "%DEBUG_LOG%"
+            echo PowerShell download failed, trying curl... >> "%DEBUG_LOG%"
             curl -L -o "%PORTABLE_ZIP%" "%PORTABLE_ZIP_URL%" >> "%DEBUG_LOG%" 2>&1
             if !errorlevel! equ 0 (
                 if exist "%PORTABLE_ZIP%" (
@@ -92,13 +92,29 @@ if not exist "!PORTABLE_PYTHON!" (
     if exist "!PORTABLE_DIR!" (
         echo Removing old PortablePython folder... >> "%DEBUG_LOG%"
         rmdir /s /q "!PORTABLE_DIR!" 2>nul
+        if exist "!PORTABLE_DIR!" (
+            echo [ERROR] Could not remove existing PortablePython folder. >> "%DEBUG_LOG%"
+            pause
+            exit /b 1
+        )
     )
     mkdir "!PORTABLE_DIR!" >> "%DEBUG_LOG%" 2>&1
-    powershell -Command "Expand-Archive -Path '%PORTABLE_ZIP%' -DestinationPath '%PORTABLE_DIR%' -Force" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! neq 0 (
-        echo [ERROR] Extraction failed. >> "%DEBUG_LOG%"
+        echo [ERROR] Failed to create PortablePython directory. >> "%DEBUG_LOG%"
         pause
         exit /b 1
+    )
+    
+    :: Try PowerShell Expand-Archive first
+    powershell -Command "Expand-Archive -Path '%PORTABLE_ZIP%' -DestinationPath '%PORTABLE_DIR%' -Force" >> "%DEBUG_LOG%" 2>&1
+    if !errorlevel! neq 0 (
+        echo PowerShell Expand-Archive failed, trying .NET fallback... >> "%DEBUG_LOG%"
+        powershell -Command "$shell = New-Object -ComObject Shell.Application; $zip = $shell.NameSpace('%PORTABLE_ZIP%'); $dest = $shell.NameSpace('%PORTABLE_DIR%'); $dest.CopyHere($zip.Items(), 16)" >> "%DEBUG_LOG%" 2>&1
+        if !errorlevel! neq 0 (
+            echo [ERROR] Extraction failed with both methods. >> "%DEBUG_LOG%"
+            pause
+            exit /b 1
+        )
     )
     del "%PORTABLE_ZIP%" 2>nul
     echo Portable Python ready. >> "%DEBUG_LOG%"
