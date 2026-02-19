@@ -14,7 +14,18 @@ set MAX_RETRIES=3
 
 :: ---------- DEBUG LOG ----------
 set "DEBUG_LOG=%temp%\autodrivefetch_debug.log"
-echo %date% %time% - Session started > "%DEBUG_LOG%"
+echo %date% %time% - Session started >> "%DEBUG_LOG%"
+
+:: ---------- IF ELEVATED, PAUSE AT START ----------
+if "%1"=="elevated" (
+    echo.
+    echo ====================================================
+    echo Running with Administrator privileges.
+    echo This window will pause at each step for debugging.
+    echo ====================================================
+    echo.
+    pause
+)
 
 :: ---------- CHANGE TO SCRIPT DIRECTORY ----------
 cd /d "%~dp0" || (
@@ -23,15 +34,13 @@ cd /d "%~dp0" || (
     exit /b 1
 )
 
-:: ---------- ELEVATE TO ADMIN (but wait for elevated process) ----------
+:: ---------- ELEVATE TO ADMIN (if not already) ----------
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo Requesting Administrator Access...
-    powershell -Command "Start-Process '%~f0' -Verb RunAs -WorkingDirectory '%~dp0' -Wait"
+    powershell -Command "Start-Process '%~f0' -ArgumentList 'elevated' -Verb RunAs -WorkingDirectory '%~dp0' -Wait"
     exit /b
 )
-echo Running with Administrator privileges.
-pause
 
 :: ---------- CREATE SOURCE FOLDER ----------
 echo [1] Creating Source folder...
@@ -92,25 +101,6 @@ if not exist "!PORTABLE_PYTHON!" (
             )
         ) else (
             echo     curl failed.
-        )
-        
-        :: Method 3: bitsadmin (Windows built-in)
-        echo     Trying bitsadmin...
-        bitsadmin /transfer mydownload /download /priority high "%PORTABLE_ZIP_URL%" "%PORTABLE_ZIP%" >> "%DEBUG_LOG%" 2>&1
-        if !errorlevel! equ 0 (
-            if exist "%PORTABLE_ZIP%" (
-                for %%A in ("%PORTABLE_ZIP%") do set SIZE=%%~zA
-                if !SIZE! gtr 10000000 (
-                    set DOWNLOAD_OK=1
-                    echo     [OK] Download successful via bitsadmin.
-                    goto :EXTRACT
-                ) else (
-                    echo     [WARNING] File too small (!SIZE! bytes), retrying...
-                    del "%PORTABLE_ZIP%" 2>nul
-                )
-            )
-        ) else (
-            echo     bitsadmin failed.
         )
         
         timeout /t 2 >nul
