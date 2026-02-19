@@ -130,7 +130,7 @@ set DOWNLOAD_OK=0
 for /l %%i in (1,1,%MAX_RETRIES%) do (
     echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
     
-    :: Properly encoded download with user-agent for Google Drive
+    :: Properly encoded download with user-agent for Google Drive (fixed URL)
     powershell -Command "$wc = New-Object System.Net.WebClient; $wc.Headers.Add('user-agent', 'Mozilla/5.0'); $wc.DownloadFile('https://drive.usercontent.google.com/download?id=%PYTHON_DRIVE_ID%&confirm=t', '%INSTALLER%')" >> "%DEBUG_LOG%" 2>&1
     
     if !errorlevel! equ 0 (
@@ -164,6 +164,7 @@ start /wait "" "%INSTALLER%" /quiet InstallAllUsers=0 PrependPath=1 Include_test
 if %errorlevel% neq 0 (
     echo [ERROR] Python installation failed with code %errorlevel%. >> "%DEBUG_LOG%"
     del "%INSTALLER%" 2>nul
+    pause
     exit /b 1
 )
 del "%INSTALLER%" >nul 2>&1
@@ -174,6 +175,7 @@ set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USER
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python installed but not recognized in PATH. >> "%DEBUG_LOG%"
+    pause
     exit /b 1
 )
 echo Python installed successfully. >> "%DEBUG_LOG%"
@@ -226,6 +228,7 @@ set TEMP_SCRIPT=!temp!\ADF_CLI.tmp.py
 call :DOWNLOAD_SCRIPT_TO "!TEMP_SCRIPT!"
 if !errorlevel! neq 0 (
     echo [ERROR] Download of new script failed. >> "%DEBUG_LOG%"
+    pause
     exit /b 1
 )
 
@@ -237,6 +240,7 @@ if !errorlevel! neq 0 (
     if !errorlevel! neq 0 (
         echo [ERROR] Could not replace script. Check permissions. >> "%DEBUG_LOG%"
         del "!TEMP_SCRIPT!" 2>nul
+        pause
         exit /b 1
     ) else (
         echo Update successful (copy). >> "%DEBUG_LOG%"
