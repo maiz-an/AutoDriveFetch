@@ -21,8 +21,8 @@ if %errorlevel% neq 0 (
 )
 
 :: ---------- CONFIGURATION ----------
-set PYTHON_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
-set PYTHON_URL_32=https://www.python.org/ftp/python/3.12.9/python-3.12.9.exe
+set PYTHON_DRIVE_ID=1pCwjxLDxxtf6LQ9FYXzbMppSUUQEQth5
+set PYTHON_DRIVE_URL=https://drive.usercontent.google.com/download?id=%PYTHON_DRIVE_ID%&confirm=t
 set INSTALLER=%temp%\python-installer.exe
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
@@ -125,18 +125,20 @@ if exist "!PYTHON_PER_USER_32!" (
     if !errorlevel! equ 0 exit /b 0
 )
 
-:: Download and install Python
-echo Downloading Python installer (64-bit)...
+:: Download and install Python from Google Drive
+echo Downloading Python installer...
 set DOWNLOAD_OK=0
 for /l %%i in (1,1,%MAX_RETRIES%) do (
     echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
-    powershell -Command "& { $wc = New-Object System.Net.WebClient; $wc.DownloadFile('%PYTHON_URL%', '%INSTALLER%') }" >> "%DEBUG_LOG%" 2>&1
+    
+    :: Method 1: PowerShell WebClient
+    powershell -Command "& { $wc = New-Object System.Net.WebClient; $wc.DownloadFile('%PYTHON_DRIVE_URL%', '%INSTALLER%') }" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! equ 0 (
         if exist "%INSTALLER%" (
             for %%A in ("%INSTALLER%") do set SIZE=%%~zA
             if !SIZE! gtr 1000000 (
                 set DOWNLOAD_OK=1
-                echo Download successful (64-bit). >> "%DEBUG_LOG%"
+                echo Download successful from Google Drive. >> "%DEBUG_LOG%"
                 goto :INSTALL_PYTHON
             ) else (
                 echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
@@ -144,20 +146,15 @@ for /l %%i in (1,1,%MAX_RETRIES%) do (
             )
         )
     )
-    timeout /t 2 >nul
-)
-
-:: Fallback to 32-bit installer
-echo 64-bit download failed, trying 32-bit...
-for /l %%i in (1,1,%MAX_RETRIES%) do (
-    echo Attempt %%i of %MAX_RETRIES% (32-bit)... >> "%DEBUG_LOG%"
-    powershell -Command "& { $wc = New-Object System.Net.WebClient; $wc.DownloadFile('%PYTHON_URL_32%', '%INSTALLER%') }" >> "%DEBUG_LOG%" 2>&1
+    
+    :: Method 2: PowerShell Invoke-WebRequest as fallback
+    powershell -Command "& { Invoke-WebRequest -Uri '%PYTHON_DRIVE_URL%' -OutFile '%INSTALLER%' -UseBasicParsing }" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! equ 0 (
         if exist "%INSTALLER%" (
             for %%A in ("%INSTALLER%") do set SIZE=%%~zA
             if !SIZE! gtr 1000000 (
                 set DOWNLOAD_OK=1
-                echo Download successful (32-bit). >> "%DEBUG_LOG%"
+                echo Download successful from Google Drive. >> "%DEBUG_LOG%"
                 goto :INSTALL_PYTHON
             ) else (
                 echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
@@ -165,11 +162,15 @@ for /l %%i in (1,1,%MAX_RETRIES%) do (
             )
         )
     )
+    
     timeout /t 2 >nul
 )
 
 if !DOWNLOAD_OK! equ 0 (
     echo [ERROR] Python download failed after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
+    echo Please download Python 3.12.9 manually from:
+    echo https://drive.google.com/file/d/%PYTHON_DRIVE_ID%/view
+    pause
     exit /b 1
 )
 
