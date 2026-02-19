@@ -8,6 +8,7 @@ echo %date% %time% - Session started > "%DEBUG_LOG%"
 :: Change to the directory of the batch file for portability
 cd /d "%~dp0" || (
     echo [ERROR] Cannot change to batch directory >> "%DEBUG_LOG%"
+    echo Press any key to exit.
     pause
     exit /b 1
 )
@@ -145,6 +146,8 @@ echo ============================================================
 echo    Debug log: %DEBUG_LOG%
 echo    Check it if something went wrong.
 echo ============================================================
+echo Press any key to exit.
+pause
 exit /b 0
 
 :: ------------------------------------------------------------------
