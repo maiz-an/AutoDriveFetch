@@ -21,9 +21,10 @@ if %errorlevel% neq 0 (
 )
 
 :: ---------- CONFIGURATION ----------
-:: Use stable Python 3.12.9 (definitely exists)
-set PYTHON_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
-set INSTALLER=%temp%\python-installer.exe
+set "PORTABLE_ZIP_URL=https://github.com/maiz-an/AutoDriveFetch/raw/main/PortablePython.zip"
+set "PORTABLE_ZIP=%temp%\PortablePython.zip"
+set "PORTABLE_DIR=%~dp0PortablePython"
+set "PORTABLE_PYTHON=%PORTABLE_DIR%\python.exe"
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
 set SCRIPT_DL_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/Source/ADF_CLI.py
@@ -43,12 +44,71 @@ if not exist "!SOURCE_FOLDER!" (
     )
 )
 
-:: ------------------------------------------------------------------
-:: 1. CHECK / INSTALL PYTHON (robust version)
-:: ------------------------------------------------------------------
-call :CHECK_PYTHON
-if %errorlevel% neq 0 (
-    echo [ERROR] Python setup failed >> "%DEBUG_LOG%"
+:: ---------- DOWNLOAD / CHECK PORTABLE PYTHON ----------
+if not exist "!PORTABLE_PYTHON!" (
+    echo Portable Python not found. Downloading from GitHub...
+    set DOWNLOAD_OK=0
+    for /l %%i in (1,1,%MAX_RETRIES%) do (
+        echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
+        powershell -Command "try { Invoke-WebRequest -Uri '%PORTABLE_ZIP_URL%' -OutFile '%PORTABLE_ZIP%' -UseBasicParsing } catch { exit 1 }" >> "%DEBUG_LOG%" 2>&1
+        if !errorlevel! equ 0 (
+            if exist "%PORTABLE_ZIP%" (
+                for %%A in ("%PORTABLE_ZIP%") do set SIZE=%%~zA
+                if !SIZE! gtr 10000000 (  REM ~10 MB
+                    set DOWNLOAD_OK=1
+                    echo Download successful. >> "%DEBUG_LOG%"
+                    goto :EXTRACT_PYTHON
+                ) else (
+                    echo Download too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
+                    del "%PORTABLE_ZIP%" 2>nul
+                )
+            )
+        ) else (
+            echo Download failed, trying curl... >> "%DEBUG_LOG%"
+            curl -L -o "%PORTABLE_ZIP%" "%PORTABLE_ZIP_URL%" >> "%DEBUG_LOG%" 2>&1
+            if !errorlevel! equ 0 (
+                if exist "%PORTABLE_ZIP%" (
+                    for %%A in ("%PORTABLE_ZIP%") do set SIZE=%%~zA
+                    if !SIZE! gtr 10000000 (
+                        set DOWNLOAD_OK=1
+                        echo Download successful via curl. >> "%DEBUG_LOG%"
+                        goto :EXTRACT_PYTHON
+                    )
+                )
+            )
+        )
+        timeout /t 2 >nul
+    )
+    if !DOWNLOAD_OK! equ 0 (
+        echo [ERROR] Failed to download Portable Python after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
+        echo Please download manually from:
+        echo %PORTABLE_ZIP_URL%
+        pause
+        exit /b 1
+    )
+    
+    :EXTRACT_PYTHON
+    echo Extracting Portable Python...
+    if exist "!PORTABLE_DIR!" (
+        echo Removing old PortablePython folder... >> "%DEBUG_LOG%"
+        rmdir /s /q "!PORTABLE_DIR!" 2>nul
+    )
+    mkdir "!PORTABLE_DIR!" >> "%DEBUG_LOG%" 2>&1
+    powershell -Command "Expand-Archive -Path '%PORTABLE_ZIP%' -DestinationPath '%PORTABLE_DIR%' -Force" >> "%DEBUG_LOG%" 2>&1
+    if !errorlevel! neq 0 (
+        echo [ERROR] Extraction failed. >> "%DEBUG_LOG%"
+        pause
+        exit /b 1
+    )
+    del "%PORTABLE_ZIP%" 2>nul
+    echo Portable Python ready. >> "%DEBUG_LOG%"
+) else (
+    echo Portable Python already present. >> "%DEBUG_LOG%"
+)
+
+:: ---------- VERIFY PORTABLE PYTHON ----------
+if not exist "!PORTABLE_PYTHON!" (
+    echo [ERROR] Portable Python still not found after setup. >> "%DEBUG_LOG%"
     pause
     exit /b 1
 )
@@ -71,8 +131,8 @@ echo Loading...
 timeout /t 2 /nobreak >nul
 cls
 
-:: Run Python script and capture exit code
-python -u "!PYTHON_SCRIPT!"
+:: Run Python script with portable python
+"!PORTABLE_PYTHON!" -u "!PYTHON_SCRIPT!"
 set PY_EXIT=!errorlevel!
 echo %date% %time% - Python script exited with code !PY_EXIT! >> "%DEBUG_LOG%"
 
@@ -100,117 +160,6 @@ exit /b 0
 ::  FUNCTIONS
 :: ------------------------------------------------------------------
 
-:CHECK_PYTHON
-:: First, try to get real Python version, ignoring Microsoft Store stub
-set PYTHON_OK=0
-for /f "delims=" %%a in ('python -V 2^>^&1') do set "PYVER=%%a"
-echo Python check returned: !PYVER! >> "%DEBUG_LOG%"
-
-:: If output contains "Python", it's real; if it contains "Microsoft Store" or is empty, it's fake/missing
-if not "!PYVER!"=="" (
-    echo !PYVER! | findstr /i "Python" >nul
-    if !errorlevel! equ 0 (
-        echo Real Python found. >> "%DEBUG_LOG%"
-        set PYTHON_OK=1
-    ) else (
-        echo Python output is not a real Python version (maybe Microsoft Store stub). >> "%DEBUG_LOG%"
-    )
-)
-
-if !PYTHON_OK! equ 1 (
-    echo Python is already installed. >> "%DEBUG_LOG%"
-    exit /b 0
-)
-
-:: Check per-user Python (64-bit)
-set "PYTHON_PER_USER=%USERPROFILE%\AppData\Local\Programs\Python\Python312\python.exe"
-if exist "!PYTHON_PER_USER!" (
-    echo Found Python in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;!PATH!"
-    python --version >nul 2>&1
-    if !errorlevel! equ 0 exit /b 0
-)
-
-:: Check per-user Python (32-bit fallback)
-set "PYTHON_PER_USER_32=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\python.exe"
-if exist "!PYTHON_PER_USER_32!" (
-    echo Found Python 32-bit in per-user location. >> "%DEBUG_LOG%"
-    set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;!PATH!"
-    python --version >nul 2>&1
-    if !errorlevel! equ 0 exit /b 0
-)
-
-:: No real Python found – download and install
-echo No working Python found. Downloading Python 3.12.9 installer from python.org...
-set DOWNLOAD_OK=0
-for /l %%i in (1,1,%MAX_RETRIES%) do (
-    echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
-    
-    powershell -Command "try { Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%INSTALLER%' -UseBasicParsing } catch { exit 1 }" >> "%DEBUG_LOG%" 2>&1
-    
-    if !errorlevel! equ 0 (
-        if exist "%INSTALLER%" (
-            for %%A in ("%INSTALLER%") do set SIZE=%%~zA
-            if !SIZE! gtr 1000000 (
-                set DOWNLOAD_OK=1
-                echo Download successful. >> "%DEBUG_LOG%"
-                goto :INSTALL_PYTHON
-            ) else (
-                echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
-                del "%INSTALLER%" 2>nul
-            )
-        )
-    ) else (
-        echo PowerShell download failed, trying curl... >> "%DEBUG_LOG%"
-        curl -L -o "%INSTALLER%" "%PYTHON_URL%" >> "%DEBUG_LOG%" 2>&1
-        if !errorlevel! equ 0 (
-            if exist "%INSTALLER%" (
-                for %%A in ("%INSTALLER%") do set SIZE=%%~zA
-                if !SIZE! gtr 1000000 (
-                    set DOWNLOAD_OK=1
-                    echo Download successful via curl. >> "%DEBUG_LOG%"
-                    goto :INSTALL_PYTHON
-                )
-            )
-        )
-    )
-    
-    timeout /t 2 >nul
-)
-
-if !DOWNLOAD_OK! equ 0 (
-    echo [ERROR] Python download failed after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
-    echo Please download Python 3.12.9 manually from:
-    echo %PYTHON_URL%
-    pause
-    exit /b 1
-)
-
-:INSTALL_PYTHON
-echo Installing Python 3.12.9 for current user...
-start /wait "" "%INSTALLER%" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
-if %errorlevel% neq 0 (
-    echo [ERROR] Python installation failed with code %errorlevel%. >> "%DEBUG_LOG%"
-    del "%INSTALLER%" 2>nul
-    pause
-    exit /b 1
-)
-del "%INSTALLER%" >nul 2>&1
-
-:: Refresh PATH
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312;%PATH%"
-set "PATH=%USERPROFILE%\AppData\Local\Programs\Python\Python312-32\Scripts;%USERPROFILE%\AppData\Local\Programs\Python\Python312-32;%PATH%"
-
-:: Verify installation
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Python installed but not recognized in PATH. >> "%DEBUG_LOG%"
-    pause
-    exit /b 1
-)
-echo Python installed successfully. >> "%DEBUG_LOG%"
-exit /b 0
-
 :UPDATE_SCRIPT
 if not exist "!PYTHON_SCRIPT!" (
     echo Script not found – downloading latest... >> "%DEBUG_LOG%"
@@ -221,9 +170,9 @@ if not exist "!PYTHON_SCRIPT!" (
 :: ---- VERSION CHECK ----
 echo Checking for updates... >> "%DEBUG_LOG%"
 
-:: Get local version
+:: Get local version using portable python
 set LOCAL_VERSION=
-for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%~dp0Source'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
+for /f "delims=" %%i in ('"!PORTABLE_PYTHON!" -c "import sys; sys.path.insert(0, r'%SOURCE_FOLDER%'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set LOCAL_VERSION=%%i
 if "!LOCAL_VERSION!"=="" (
     echo [WARNING] Could not determine local version. >> "%DEBUG_LOG%"
     set "LOCAL_VERSION=0.0.0"
@@ -283,7 +232,7 @@ if !errorlevel! neq 0 (
 :: --- VERIFY THE UPDATE ---
 echo Verifying updated script... >> "%DEBUG_LOG%"
 timeout /t 1 /nobreak >nul
-for /f "delims=" %%i in ('python -c "import sys; sys.path.insert(0, r'%~dp0Source'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set NEW_VERSION=%%i
+for /f "delims=" %%i in ('"!PORTABLE_PYTHON!" -c "import sys; sys.path.insert(0, r'%SOURCE_FOLDER%'); import ADF_CLI; print(ADF_CLI.__version__)" 2^>nul') do set NEW_VERSION=%%i
 if "!NEW_VERSION!"=="!REMOTE_VERSION!" (
     echo Verified: script is now version !NEW_VERSION!. >> "%DEBUG_LOG%"
 ) else (
