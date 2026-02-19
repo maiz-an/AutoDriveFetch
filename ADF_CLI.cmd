@@ -6,6 +6,7 @@ set "DEBUG_LOG=%temp%\autodrivefetch_debug.log"
 echo %date% %time% - Session started >> "%DEBUG_LOG%"
 echo Script path: %~f0 >> "%DEBUG_LOG%"
 echo Current directory: %cd% >> "%DEBUG_LOG%"
+echo Arguments: %* >> "%DEBUG_LOG%"
 
 :: If we are the elevated instance, show a pause so the window stays open
 if "%1"=="elevated" (
@@ -15,12 +16,13 @@ if "%1"=="elevated" (
     echo This window will pause at the beginning for debugging.
     echo ====================================================
     echo.
-    timeout /t 3 >nul
+    pause
 )
 
 :: Change to the directory of the batch file for portability
 cd /d "%~dp0" || (
     echo [ERROR] Cannot change to batch directory >> "%DEBUG_LOG%"
+    echo Cannot change to batch directory. Press any key to exit.
     pause
     exit /b 1
 )
@@ -51,6 +53,7 @@ if not exist "!SOURCE_FOLDER!" (
     mkdir "!SOURCE_FOLDER!" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! neq 0 (
         echo [ERROR] Could not create Source folder >> "%DEBUG_LOG%"
+        echo Failed to create Source folder. Press any key to exit.
         pause
         exit /b 1
     ) else (
@@ -95,7 +98,8 @@ if not exist "!PORTABLE_PYTHON!" (
     )
     if !DOWNLOAD_OK! equ 0 (
         echo [ERROR] Failed to download Portable Python after %MAX_RETRIES% attempts. >> "%DEBUG_LOG%"
-        echo Please download manually from:
+        echo Failed to download Portable Python. Please check your internet connection.
+        echo Download manually from:
         echo %PORTABLE_ZIP_URL%
         pause
         exit /b 1
@@ -108,6 +112,7 @@ if not exist "!PORTABLE_PYTHON!" (
         rmdir /s /q "!PORTABLE_DIR!" 2>nul
         if exist "!PORTABLE_DIR!" (
             echo [ERROR] Could not remove existing PortablePython folder. >> "%DEBUG_LOG%"
+            echo Failed to remove old PortablePython folder. Check permissions.
             pause
             exit /b 1
         )
@@ -115,6 +120,7 @@ if not exist "!PORTABLE_PYTHON!" (
     mkdir "!PORTABLE_DIR!" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! neq 0 (
         echo [ERROR] Failed to create PortablePython directory. >> "%DEBUG_LOG%"
+        echo Failed to create PortablePython directory. Check disk space and permissions.
         pause
         exit /b 1
     )
@@ -126,6 +132,7 @@ if not exist "!PORTABLE_PYTHON!" (
         powershell -Command "$shell = New-Object -ComObject Shell.Application; $zip = $shell.NameSpace('%PORTABLE_ZIP%'); $dest = $shell.NameSpace('%PORTABLE_DIR%'); $dest.CopyHere($zip.Items(), 16)" >> "%DEBUG_LOG%" 2>&1
         if !errorlevel! neq 0 (
             echo [ERROR] Extraction failed with both methods. >> "%DEBUG_LOG%"
+            echo Failed to extract PortablePython.zip. The file may be corrupt.
             pause
             exit /b 1
         )
@@ -139,6 +146,7 @@ if not exist "!PORTABLE_PYTHON!" (
 :: ---------- VERIFY PORTABLE PYTHON ----------
 if not exist "!PORTABLE_PYTHON!" (
     echo [ERROR] Portable Python still not found after setup. >> "%DEBUG_LOG%"
+    echo Portable Python executable not found. Something went wrong.
     pause
     exit /b 1
 )
@@ -194,6 +202,11 @@ exit /b 0
 if not exist "!PYTHON_SCRIPT!" (
     echo Script not found – downloading latest... >> "%DEBUG_LOG%"
     call :DOWNLOAD_SCRIPT
+    if !errorlevel! neq 0 (
+        echo Failed to download script.
+        pause
+        exit /b 1
+    )
     exit /b !errorlevel!
 )
 
