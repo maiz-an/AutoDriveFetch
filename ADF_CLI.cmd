@@ -22,7 +22,6 @@ if %errorlevel% neq 0 (
 
 :: ---------- CONFIGURATION ----------
 set PYTHON_DRIVE_ID=1pCwjxLDxxtf6LQ9FYXzbMppSUUQEQth5
-set PYTHON_DRIVE_URL=https://drive.usercontent.google.com/download?id=%PYTHON_DRIVE_ID%&confirm=t
 set INSTALLER=%temp%\python-installer.exe
 set SOURCE_FOLDER=%~dp0Source
 set PYTHON_SCRIPT=%SOURCE_FOLDER%\ADF_CLI.py
@@ -131,24 +130,9 @@ set DOWNLOAD_OK=0
 for /l %%i in (1,1,%MAX_RETRIES%) do (
     echo Attempt %%i of %MAX_RETRIES%... >> "%DEBUG_LOG%"
     
-    :: Method 1: PowerShell WebClient
-    powershell -Command "& { $wc = New-Object System.Net.WebClient; $wc.DownloadFile('%PYTHON_DRIVE_URL%', '%INSTALLER%') }" >> "%DEBUG_LOG%" 2>&1
-    if !errorlevel! equ 0 (
-        if exist "%INSTALLER%" (
-            for %%A in ("%INSTALLER%") do set SIZE=%%~zA
-            if !SIZE! gtr 1000000 (
-                set DOWNLOAD_OK=1
-                echo Download successful from Google Drive. >> "%DEBUG_LOG%"
-                goto :INSTALL_PYTHON
-            ) else (
-                echo Installer too small (!SIZE! bytes), retrying... >> "%DEBUG_LOG%"
-                del "%INSTALLER%" 2>nul
-            )
-        )
-    )
+    :: Properly encoded download with user-agent for Google Drive
+    powershell -Command "$wc = New-Object System.Net.WebClient; $wc.Headers.Add('user-agent', 'Mozilla/5.0'); $wc.DownloadFile('https://drive.usercontent.google.com/download?id=%PYTHON_DRIVE_ID%&confirm=t', '%INSTALLER%')" >> "%DEBUG_LOG%" 2>&1
     
-    :: Method 2: PowerShell Invoke-WebRequest as fallback
-    powershell -Command "& { Invoke-WebRequest -Uri '%PYTHON_DRIVE_URL%' -OutFile '%INSTALLER%' -UseBasicParsing }" >> "%DEBUG_LOG%" 2>&1
     if !errorlevel! equ 0 (
         if exist "%INSTALLER%" (
             for %%A in ("%INSTALLER%") do set SIZE=%%~zA
