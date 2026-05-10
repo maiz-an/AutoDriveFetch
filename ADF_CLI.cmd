@@ -8,13 +8,15 @@ echo Script path: %~f0 >> "%DEBUG_LOG%"
 echo Current directory: %cd% >> "%DEBUG_LOG%"
 echo Arguments: %* >> "%DEBUG_LOG%"
 
-:: If we are the elevated instance, brief message (no pause)
+:: If we are the elevated instance, show a pause so the window stays open
 if "%1"=="elevated" (
     echo.
     echo ====================================================
     echo Running with Administrator privileges...
+    echo This window will pause at the beginning for debugging.
     echo ====================================================
     echo.
+    pause
 )
 
 :: ---------- CHANGE DIRECTORY ----------
@@ -26,6 +28,7 @@ cd /d "%~dp0" || (
     exit /b 1
 )
 echo [TRACE] Current directory after cd: %cd%
+pause
 
 :: ---------- ELEVATE TO ADMIN ----------
 net session >nul 2>&1
@@ -33,9 +36,11 @@ if %errorlevel% neq 0 (
     echo [TRACE] Not admin. Requesting elevation...
     powershell -Command "Start-Process '%~f0' -ArgumentList 'elevated' -Verb RunAs -WorkingDirectory '%~dp0'"
     echo [TRACE] Elevation requested. This window will now close.
+    pause
     exit /b
 )
 echo [TRACE] Already running as admin.
+pause
 
 :: ---------- CONFIGURATION ----------
 set "PORTABLE_ZIP_URL=https://www.python.org/ftp/python/3.12.9/python-3.12.9-embed-amd64.zip"
@@ -49,6 +54,7 @@ set VERSION_URL=https://raw.githubusercontent.com/maiz-an/AutoDriveFetch/main/ve
 set MAX_RETRIES=3
 
 echo [TRACE] Configuration set.
+pause
 
 :: ---------- CREATE SOURCE FOLDER ----------
 if not exist "!SOURCE_FOLDER!" (
@@ -65,6 +71,7 @@ if not exist "!SOURCE_FOLDER!" (
 ) else (
     echo [TRACE] Source folder already exists.
 )
+pause
 
 :: ---------- CHECK / DOWNLOAD PORTABLE PYTHON ----------
 if not exist "!PORTABLE_PYTHON!" (
@@ -146,9 +153,11 @@ if not exist "!PORTABLE_PYTHON!" (
     )
     del "%PORTABLE_ZIP%" 2>nul
     echo [TRACE] Extraction completed.
+    pause
 ) else (
     echo [TRACE] Portable Python already present.
 )
+pause
 
 :: ---------- VERIFY PORTABLE PYTHON ----------
 if not exist "!PORTABLE_PYTHON!" (
@@ -160,6 +169,7 @@ if not exist "!PORTABLE_PYTHON!" (
     exit /b 1
 )
 echo [TRACE] Portable Python found at !PORTABLE_PYTHON!
+pause
 
 :: ------------------------------------------------------------------
 :: 2. DOWNLOAD OR UPDATE PYTHON SCRIPT
@@ -170,9 +180,11 @@ set UPDATE_RESULT=!errorlevel!
 if !UPDATE_RESULT! neq 0 (
     echo [WARNING] Script update failed – using existing version. >> "%DEBUG_LOG%"
     echo [TRACE] UPDATE_SCRIPT returned error.
+    pause
 ) else (
     echo [TRACE] UPDATE_SCRIPT completed successfully.
 )
+pause
 
 :: ------------------------------------------------------------------
 :: 3. LAUNCH THE MAIN APPLICATION
@@ -190,7 +202,7 @@ echo %date% %time% - Python script exited with code !PY_EXIT! >> "%DEBUG_LOG%"
 :: Handle Python errors with visible pause
 if !PY_EXIT! neq 0 (
     echo.
-    echo [91m[ERROR] Python script crashed with code !PY_EXIT![0m
+    echo [91m[ERROR] Python script crashed with code !PY_EXIT![0m
     echo Check the debug log: %DEBUG_LOG%
     pause
 )
@@ -205,7 +217,7 @@ echo ============================================================
 echo    Debug log: %DEBUG_LOG%
 echo    Check it if something went wrong.
 echo ============================================================
-timeout /t 3 /nobreak >nul
+pause
 exit /b 0
 
 :: ------------------------------------------------------------------
@@ -239,6 +251,7 @@ if "!LOCAL_VERSION!"=="" (
 )
 echo Local version: !LOCAL_VERSION! >> "%DEBUG_LOG%"
 echo [TRACE] Local version: !LOCAL_VERSION!
+pause
 
 :: Get remote version with retries
 set REMOTE_VERSION=
@@ -247,10 +260,12 @@ call :FETCH_REMOTE_VERSION
 if "!REMOTE_VERSION!"=="" (
     echo [WARNING] Could not fetch remote version. Skipping update. >> "%DEBUG_LOG%"
     echo [TRACE] Remote version fetch failed.
+    pause
     exit /b 0
 )
 echo Remote version: !REMOTE_VERSION! >> "%DEBUG_LOG%"
 echo [TRACE] Remote version: !REMOTE_VERSION!
+pause
 
 :: Compare versions
 echo [TRACE] Comparing versions...
@@ -259,15 +274,18 @@ set COMPARE_RESULT=!errorlevel!
 if !COMPARE_RESULT! equ 2 (
     echo [WARNING] Version comparison failed. Skipping update. >> "%DEBUG_LOG%"
     echo [TRACE] Version comparison error.
+    pause
     exit /b 0
 )
 if !COMPARE_RESULT! equ 0 (
     echo New version available. Updating... >> "%DEBUG_LOG%"
     echo [TRACE] New version available.
+    pause
     goto :DO_UPDATE
 )
 echo You have the latest version. >> "%DEBUG_LOG%"
 echo [TRACE] Already up-to-date.
+pause
 exit /b 0
 
 :DO_UPDATE
@@ -277,6 +295,7 @@ call :DOWNLOAD_SCRIPT_TO "!TEMP_SCRIPT!"
 if !errorlevel! neq 0 (
     echo [ERROR] Download of new script failed. >> "%DEBUG_LOG%"
     echo [TRACE] Download failed.
+    pause
     exit /b 1
 )
 
@@ -289,6 +308,7 @@ if !errorlevel! neq 0 (
     if !errorlevel! neq 0 (
         echo [ERROR] Could not replace script. Check permissions. >> "%DEBUG_LOG%"
         del "!TEMP_SCRIPT!" 2>nul
+        pause
         exit /b 1
     ) else (
         echo Update successful (copy). >> "%DEBUG_LOG%"
@@ -306,6 +326,7 @@ if "!NEW_VERSION!"=="!REMOTE_VERSION!" (
     echo Verified: script is now version !NEW_VERSION!. >> "%DEBUG_LOG%"
 ) else (
     echo [ERROR] Script update verification failed! Got version !NEW_VERSION! >> "%DEBUG_LOG%"
+    pause
     exit /b 1
 )
 
